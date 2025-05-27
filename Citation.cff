@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "real-time-3D-tracking"
+version: 1.0.0
+doi: 10.5281/zenodo.15526573
+date-released: 2025-05-27
+license: CC0-1.0 
+url: https://github.com/HenrikTrom/real-time-3D-tracking
+repository-code: https://github.com/HenrikTrom/real-time-3D-tracking
+abstract: "ROS/ROS2 package enabling real time 3D tracking on a multi-camera setup."
+authors:
+  - family-names: Trommer
+    given-names: Henrik
+    orcid: https://orcid.org/0009-0002-3110-0963
+    affiliation: University of Göttingen
+keywords:
+  - real-time
+  - 3D-tracking
+  - ros
+  - ros2
+  - marker-less
+  - marker-based
+  - object-detection
+  - keypoint-detection
+  - open source
+  - research software
