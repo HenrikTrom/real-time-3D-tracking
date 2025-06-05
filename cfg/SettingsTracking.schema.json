@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "3D Tracking Configuration Schema",
+  "type": "object",
+  "properties": {
+    "cfg_multicamera": {
+      "type": "string",
+      "description": "Path to multicamera configuration file"
+    },
+    "cfg_camera_calibration": {
+      "type": "string",
+      "description": "Path to multicamera configuration file"
+    },
+    "cfg_det": {
+      "type": "string",
+      "description": "Path to detection model configuration file"
+    },
+    "cfg_pose": {
+      "type": "string",
+      "description": "Path to pose estimation model configuration file"
+    },
+    "min_cams": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Minimum number of cameras required"
+    },
+    "online_mode": {
+      "type": "boolean",
+      "description": "Run in online/live mode"
+    },
+    "compression_quality": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "JPEG compression quality for saved frames"
+    }
+  },
+  "required": [
+    "cfg_multicamera",
+    "cfg_camera_calibration",
+    "cfg_det",
+    "cfg_pose",
+    "min_cams",
+    "online_mode",
+    "compression_quality"
+  ],
+  "additionalProperties": false
+}

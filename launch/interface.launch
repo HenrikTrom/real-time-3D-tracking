@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="ns" default="flir_ros_interface" />
+<arg name="autostart" default="true" />
+<arg name="visualize" default="true" />
+
+<group ns="$(arg ns)">
+
+    <node name="tracker" type="interface" pkg="real_time_3d_tracking" output="screen">
+    </node>
+    <!-- respawn="true" -->
+    <node pkg="rosservice" type="rosservice" name="tracker_starter" if="$(arg autostart)" args="call --wait /$(arg ns)/tracker/start " />
+
+    <!-- <node pkg="fri_visualization" name="tracklets_visualizer" type="aabb_markers.py" output="screen" if="$(arg visualize)"/> -->
+</group>
+
+</launch>

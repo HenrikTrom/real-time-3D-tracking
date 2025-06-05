@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>real_time_3d_tracking</name>
+  <version>0.0.0</version>
+  <description>The real_time_3d_tracking package</description>
+
+  <maintainer email="henrik.trommer@uni-goettinen.de">docker</maintainer>
+
+  <license> CC0 1.0 Universal </license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <depend>visualization_msgs</depend>
+  <depend>camera</depend>
+  <depend>ros_node_interface</depend>
+  <depend>flir_icp_calib</depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
+
+  <export>
+
+  </export>
+</package>

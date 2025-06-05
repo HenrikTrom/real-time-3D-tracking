@@ -5,8 +5,8 @@
     "pixel_format": "RGB8",
     "video_mode": "Mode1",
     "black_level": 8.0,
-    "gain": 14.0,
+    "gain": 12.0,
     "exposure_time": 4000.0,
     "binning_vertical": 2,
-    "save_dir": ""
+    "save_dir": "/home/docker/workspace/workspace/src/real-time-3D-tracking/test/inputs/videos"
 }
