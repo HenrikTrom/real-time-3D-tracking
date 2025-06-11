@@ -17,7 +17,7 @@ constexpr std::string_view BOPDYPOSE133 = "bodypose133";
 constexpr std::string_view KEYPOINT_MARKER = "keypoint_marker";
 
 constexpr std::size_t MAX_INFERENCE_SLEEP_MS = 20;
-constexpr std::size_t MAX_INFERENCE_ITER = 10;
+constexpr std::size_t MAX_INFERENCE_ITER = 1000;
 
 constexpr std::size_t N_CLASSES_DETECTIOM = 4;
 constexpr std::size_t MIN_CAMS_TRIANGULATION = 3;

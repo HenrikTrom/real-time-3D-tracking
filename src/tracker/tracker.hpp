@@ -24,9 +24,9 @@ public:
         const flir_icp_calib::MultiCameras &cameras
     );
     ~TrackingInterfaceModule();
+    void Terminate();
     bool start();
     void run();
-    void Terminate();
     const config_tracking cfg;
     const flirmulticamera::CameraSettings cam_settings;
     const flir_icp_calib::MultiCameras cameras;
@@ -37,7 +37,7 @@ public:
     void ThreadCameraOffline();
     void ThreadCameraOnline();
     std::unique_ptr<std::thread> ThreadHandleCamera;
-    // aabb->kps
+
     std::unique_ptr<std::thread> ThreadHandleAABB_KPS;
     void ThreadAABB_KPS();
 
@@ -45,10 +45,10 @@ public:
     uint32_t seq = 0;
     timespec now{}; // set the timestamp
 
-    // stages
+    // modules
     std::unique_ptr<stages::PublishImages> stage_publishimages;
     std::unique_ptr<modules::AABB> module_aabb;
-    std::unique_ptr<modules::KPS<133, 192, 256>> module_kps_full;
+    std::unique_ptr<modules::KPS<133, 384, 512>> module_kps_full;
     // std::unique_ptr<stages::KPS_COLOR> stage_kps_color;
 
 };

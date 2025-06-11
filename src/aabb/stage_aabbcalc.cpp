@@ -2,7 +2,6 @@
 
 namespace rt3d_tracking{
 
-// TODO: fix custop post-processing
 void AABB_PostProcess(std::vector<data::AABB>& aabbs_in)
     {
         float stepx=0;
@@ -15,9 +14,9 @@ void AABB_PostProcess(std::vector<data::AABB>& aabbs_in)
             stepz=0;
             if (aabb.ClassID == 0 || aabb.ClassID == 1) // process hand
             {
-                stepx = abs(aabb.Vertices[3](0) - aabb.Vertices[0](0)) * 0.15;
-                stepy = abs(aabb.Vertices[1](1) - aabb.Vertices[0](1)) * 0.15;
-                stepz = abs(aabb.Vertices[4](2) - aabb.Vertices[0](2)) * 0.45;
+                stepx = abs(aabb.Vertices[3](0) - aabb.Vertices[0](0)) * 0.015;
+                stepy = abs(aabb.Vertices[1](1) - aabb.Vertices[0](1)) * 0.015;
+                stepz = abs(aabb.Vertices[4](2) - aabb.Vertices[0](2)) * 0.015;
 
                 aabb.Vertices[0](0) -= stepx; aabb.Vertices[1](0) -= stepx; aabb.Vertices[4](0) -= stepx; aabb.Vertices[5](0) -= stepx;
                 aabb.Vertices[1](1) -= stepy; aabb.Vertices[2](1) -= stepy; aabb.Vertices[5](1) -= stepy; aabb.Vertices[6](1) -= stepy;
@@ -28,9 +27,9 @@ void AABB_PostProcess(std::vector<data::AABB>& aabbs_in)
                 aabb.Vertices[0](2) += stepz; aabb.Vertices[1](2) += stepz; aabb.Vertices[2](2) += stepz; aabb.Vertices[3](2) += stepz;
             }
             else if (aabb.ClassID == 2){
-                stepx = abs(aabb.Vertices[3](0) - aabb.Vertices[0](0)) * 0.15;
-                stepy = abs(aabb.Vertices[1](1) - aabb.Vertices[0](1)) * 0.15;
-                stepz = abs(aabb.Vertices[4](2) - aabb.Vertices[0](2)) * 0.45;
+                stepx = abs(aabb.Vertices[3](0) - aabb.Vertices[0](0)) * 0.015;
+                stepy = abs(aabb.Vertices[1](1) - aabb.Vertices[0](1)) * 0.015;
+                stepz = abs(aabb.Vertices[4](2) - aabb.Vertices[0](2)) * 0.15;
 
                 aabb.Vertices[0](0) -= stepx; aabb.Vertices[1](0) -= stepx; aabb.Vertices[4](0) -= stepx; aabb.Vertices[5](0) -= stepx;
                 aabb.Vertices[1](1) -= stepy; aabb.Vertices[2](1) -= stepy; aabb.Vertices[5](1) -= stepy; aabb.Vertices[6](1) -= stepy;
@@ -40,21 +39,19 @@ void AABB_PostProcess(std::vector<data::AABB>& aabbs_in)
                 aabb.Vertices[0](1) += stepy; aabb.Vertices[3](1) += stepy; aabb.Vertices[4](1) += stepy; aabb.Vertices[7](1) += stepy;
                 aabb.Vertices[0](2) += stepz; aabb.Vertices[1](2) += stepz; aabb.Vertices[2](2) += stepz; aabb.Vertices[3](2) += stepz;
             }
-            else if (aabb.ClassID == 3){
-                stepx = -abs(aabb.Vertices[3](0) - aabb.Vertices[0](0)) * 0.005;
-                stepy = -abs(aabb.Vertices[1](1) - aabb.Vertices[0](1)) * 0.1;
-                stepz = abs(aabb.Vertices[4](2) - aabb.Vertices[0](2)) * 0.01;
+            // else if (aabb.ClassID == 3){
+            //     stepx = -abs(aabb.Vertices[3](0) - aabb.Vertices[0](0)) * 0.005;
+            //     stepy = -abs(aabb.Vertices[1](1) - aabb.Vertices[0](1)) * 0.1;
+            //     stepz = abs(aabb.Vertices[4](2) - aabb.Vertices[0](2)) * 0.01;
 
-                aabb.Vertices[0](0) -= stepx; aabb.Vertices[1](0) -= stepx; aabb.Vertices[4](0) -= stepx; aabb.Vertices[5](0) -= stepx;
-                aabb.Vertices[1](1) -= stepy; aabb.Vertices[2](1) -= stepy; aabb.Vertices[5](1) -= stepy; aabb.Vertices[6](1) -= stepy;
-                // aabb.Vertices[4](2) -= stepz; aabb.Vertices[5](2) -= stepz; aabb.Vertices[6](2) -= stepz; aabb.Vertices[7](2) -= stepz;
-                aabb.Vertices[4](2) = 1.8; aabb.Vertices[5](2) = 1.8; aabb.Vertices[6](2) = 1.8; aabb.Vertices[7](2) = 1.8;
+            //     aabb.Vertices[0](0) -= stepx; aabb.Vertices[1](0) -= stepx; aabb.Vertices[4](0) -= stepx; aabb.Vertices[5](0) -= stepx;
+            //     aabb.Vertices[1](1) -= stepy; aabb.Vertices[2](1) -= stepy; aabb.Vertices[5](1) -= stepy; aabb.Vertices[6](1) -= stepy;
+            //     aabb.Vertices[4](2) -= stepz; aabb.Vertices[5](2) -= stepz; aabb.Vertices[6](2) -= stepz; aabb.Vertices[7](2) -= stepz;
                 
-                aabb.Vertices[2](0) += stepx; aabb.Vertices[3](0) += stepx; aabb.Vertices[6](0) += stepx; aabb.Vertices[7](0) += stepx;
-                aabb.Vertices[0](1) += stepy; aabb.Vertices[3](1) += stepy; aabb.Vertices[4](1) += stepy; aabb.Vertices[7](1) += stepy;
-                aabb.Vertices[0](2) += stepz; aabb.Vertices[1](2) += stepz; aabb.Vertices[2](2) += stepz; aabb.Vertices[3](2) += stepz;
-                // aabb.Vertices[0](2) = 1.8; aabb.Vertices[1](2) = 1.8; aabb.Vertices[2](2) = 1.8; aabb.Vertices[3](2) = 1.8;
-            }
+            //     aabb.Vertices[2](0) += stepx; aabb.Vertices[3](0) += stepx; aabb.Vertices[6](0) += stepx; aabb.Vertices[7](0) += stepx;
+            //     aabb.Vertices[0](1) += stepy; aabb.Vertices[3](1) += stepy; aabb.Vertices[4](1) += stepy; aabb.Vertices[7](1) += stepy;
+            //     aabb.Vertices[0](2) += stepz; aabb.Vertices[1](2) += stepz; aabb.Vertices[2](2) += stepz; aabb.Vertices[3](2) += stepz;
+            // }
         }
     }
 

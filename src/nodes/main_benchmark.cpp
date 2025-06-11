@@ -12,9 +12,10 @@ int main(int argc, char **argv){
     if (!modules::init_trackingInterfaceModule(nh, trackingInterfaceModule)){
         return 1;
     };
-    trackingInterfaceModule->start();
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-    trackingInterfaceModule->Terminate();
+    ros_node_interface::BaseRosInterface<modules::TrackingInterfaceModule> tracking_interface(
+        std::move(trackingInterfaceModule)
+    );
+    spdlog::info("Main thread exiting (tracking_interface)...");
 
     return 0;
 }

@@ -29,7 +29,7 @@ bool TrackingInterfaceModule::start(){
     }
     // KPS_FULL_133
     this->module_kps_full.reset(
-        new modules::KPS<133, 192, 256>(
+        new modules::KPS<133, 384, 512>(
             this->nh,
             this->cfg.cfg_pose,
             this->cameras,
@@ -37,6 +37,7 @@ bool TrackingInterfaceModule::start(){
             std::string(BOPDYPOSE133)
         )
     );
+    
     while(!this->module_kps_full->IsReady()){
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -47,8 +48,6 @@ bool TrackingInterfaceModule::start(){
     // while(!this->stage_kps_color->IsReady()){
     //     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     // }
-
-    spdlog::info("----------------------------------------");
     // camera
     this->ShouldClose = false;
     if (this->cfg.online_mode) {
@@ -85,35 +84,21 @@ void TrackingInterfaceModule::Terminate()
     this->ThreadHandleAABB_KPS->join();
     this->module_aabb->Terminate();
     this->module_kps_full->Terminate();
-    // this->stage_kps_hand->Terminate();
     // this->stage_kps_color->Terminate();
     #ifdef VIDEO_LOGGING
         this->stage_publishimages->Terminate();
     #endif
 };
 
+
 // Threads
 void TrackingInterfaceModule::ThreadAABB_KPS()
 {
-    bool saved = false;
     while (!this->ShouldClose) {
         data::backcrop_out aabb_out;
         if (this->module_aabb->Get(aabb_out)){
             // this->stage_kps_hand->InPost(aabb_out.rhand);
             // this->stage_kps_lhand->InPost(aabb_out.lhand);
-            if (!saved){
-                for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++)
-                {
-                    cv::Mat tmp;
-                    aabb_out.body.back_crops.at(cidx).download(tmp);
-                    cv::cvtColor(tmp, tmp, cv::COLOR_BGR2RGB);
-                    std::string fname = std::string(CONFIG_DIR)+"/../test/result/images/" + 
-                    std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))+"_back_crop_body.jpg";
-                    spdlog::info("Saved {}", fname);
-                    cv::imwrite(fname, tmp);
-                }
-                saved = true;
-            }
             this->module_kps_full->InPost(aabb_out.body);
             // this->stage_kps_face->InPost(aabb_out.face);
             // this->stage_kps_color->InPost(aabb_out.rhand);
@@ -131,12 +116,7 @@ void TrackingInterfaceModule::ThreadCameraSingleImg()
         fnames.at(cidx) = std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx));
     }
     std::array<cv::cuda::GpuMat, flirmulticamera::GLOBAL_CONST_NCAMS> PreProcessIn;
-    detection_inference::load_image_data(PreProcessIn, this->cpuImgs, fnames, resources);;
-
-    while (!this->module_aabb->IsReady())
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    detection_inference::load_image_data(PreProcessIn, this->cpuImgs, fnames, resources);
 
     #ifdef SINGLE_IMAGE_DEBUG
         for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
@@ -157,17 +137,14 @@ void TrackingInterfaceModule::ThreadCameraSingleImg()
             this->module_aabb->InPost(PreprocessAABB);
             progressBar.update(i);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(MAX_INFERENCE_SLEEP_MS));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(MAX_INFERENCE_SLEEP_MS));
+        std::this_thread::sleep_for(std::chrono::milliseconds(14));
     }
     progressBar.finish();
 };
 
 void TrackingInterfaceModule::ThreadCameraOffline()
 {
-    while (!this->module_aabb->IsReady())
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
     data::aabb_in PreprocessAABB;
     std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> cpuImgsTest;
     std::array<cv::VideoCapture, flirmulticamera::GLOBAL_CONST_NCAMS> video_readers;
@@ -179,7 +156,6 @@ void TrackingInterfaceModule::ThreadCameraOffline()
             std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))
             +".mp4";
     }
-    // const int64_t delay = (int64_t) 1000 / (this->cam_settings.fps+10);
     for (std::size_t cidx = 0; cidx<filenames.size(); cidx++) {
         if (!std::filesystem::exists(filenames.at(cidx)))
         {

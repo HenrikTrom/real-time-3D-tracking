@@ -7,7 +7,7 @@
 
 <group ns="$(arg ns)">
 
-    <node name="tracker" type="interface" pkg="real_time_3d_tracking" output="screen">
+    <node name="tracker" type="inference_benchmark" pkg="real_time_3d_tracking" output="screen">
     </node>
     <!-- respawn="true" -->
     <node pkg="rosservice" type="rosservice" name="tracker_starter" if="$(arg autostart)" args="call --wait /$(arg ns)/tracker/start " />

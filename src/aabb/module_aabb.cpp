@@ -17,7 +17,7 @@ AABB::AABB(
     this->detection_postprocess_stage.reset(new detection_inference::PostProcessStage(this->cfg_det));
     this->correspondance_stage.reset(new stages::Correspondance(this->cfg_corr, this->cameras));
     this->aabbcalc_stage.reset(new stages::AABBCalculate(this->cfg_aabbcalc, this->cameras));
-    this->backcrop_stage.reset(new stages::BackCrop(this->cameras));
+    this->backcrop_stage.reset(new stages::BackCrop(this->cameras, this->cfg_det.input_width, this->cfg_det.input_height));
     this->publish_stage.reset(new stages::PublishAABB(nh, 10));
     // start threads
     while(!this->detection_nn_stage->IsReady()){
@@ -48,7 +48,6 @@ AABB::AABB(
     this->ThreadHandleAABBBackCrop.reset(new std::thread(&AABB::ThreadAABBBackCrop, this));
 
     this->IsReady_flag = true;
-    // this->ThreadHandle.reset(new std::thread(&AABB::InThreadFunction, this)); // main thread of this stage
 
 }
 
@@ -130,7 +129,7 @@ void AABB::ThreadAABBBackCrop(){
                             this->cameras.Cam.at(cidx).K
                         );
                         std::string fname = std::string(CONFIG_DIR)+"/../test/result/images/" + 
-                            std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))+"_debug.jpg";
+                            std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))+"_aabbs.jpg";
                         spdlog::info("Saved {}", fname);
                         cv::imwrite(fname, DebugImgs.at(cidx));
                     }

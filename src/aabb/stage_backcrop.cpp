@@ -59,10 +59,9 @@ void Draw_AABBs(
     }
 }
 
-    
-
 BackCrop::BackCrop(
-    const flir_icp_calib::MultiCameras &cameras) : cameras(cameras)
+    const flir_icp_calib::MultiCameras &cameras, const float &width, const float &height
+) : cameras(cameras), width(width), height(height)
 {
     this->pointMatrix=Eigen::MatrixXf(4, this->n_vertices);
     this->ThreadHandle.reset(new std::thread(&BackCrop::ThreadFunction, this));
@@ -73,51 +72,59 @@ bool BackCrop::ProcessFunction(
     data::backcrop_out &backcrop_out
 ){
 
-    for (auto & aabb: backcrop_in.aabbs){
-
+    std::array<std::vector<int>, 5> xmins, ymins, xmaxs, ymaxs;
+    for (auto & aabb: backcrop_in.aabbs)
+    {
         for (int i = 0; i < this->n_vertices; ++i) {
             this->pointMatrix.col(i).head<3>() = aabb.Vertices[i].head<3>();
             this->pointMatrix(3, i) = 1.0f;
         }
 
-        for (std::size_t camid = 0;camid<flirmulticamera::GLOBAL_CONST_NCAMS; camid++){
-            this->projected = this->cameras.Cam.at(camid).P * this->pointMatrix;
+        for (std::size_t cidx = 0;cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
+            this->projected = this->cameras.Cam.at(cidx).P * this->pointMatrix;
             
             // Normalize third row to get 2D coordinates
             this->normalized = this->projected.array().rowwise() / projected.row(2).array();
 
-            // Eigen::VectorXf x_coords = normalized.row(0);
-            // Eigen::VectorXf y_coords = normalized.row(1);
-            // TODO: fix back-projection -> use max value of image
-
-            // TODO fix hard coding
-            this->xmin = std::clamp(this->normalized.row(0).minCoeff(), 0.f, 1024.f);
-            this->xmax = std::clamp(this->normalized.row(0).maxCoeff(), 0.f, 1024.f);
-            this->ymin = std::clamp(this->normalized.row(1).minCoeff(), 0.f, 768.f);
-            this->ymax = std::clamp(this->normalized.row(1).maxCoeff(), 0.f, 768.f);
-            cv::Rect bbox2d;
-            bbox2d.x = xmin;
-            bbox2d.y = ymin;
-            bbox2d.width = xmax-xmin;
-            bbox2d.height = ymax-ymin;
+            this->xmin = std::clamp(this->normalized.row(0).minCoeff(), 0.f, this->width);
+            this->xmax = std::clamp(this->normalized.row(0).maxCoeff(), 0.f, this->width);
+            this->ymin = std::clamp(this->normalized.row(1).minCoeff(), 0.f, this->height);
+            this->ymax = std::clamp(this->normalized.row(1).maxCoeff(), 0.f, this->height);
             
             if (aabb.ClassID == 0){
-                backcrop_out.lhand.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d);
-                backcrop_out.lhand.bboxes.at(camid) = bbox2d;
+                // backcrop_out.lhand.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d).clone();
+                // backcrop_out.lhand.bboxes.at(camid) = bbox2d;
+                xmins.at(cidx).push_back((int) xmin);
+                ymins.at(cidx).push_back((int) ymin);
+                xmaxs.at(cidx).push_back((int) xmax);
+                ymaxs.at(cidx).push_back((int) ymax);
             }
             else if (aabb.ClassID == 1){
-                backcrop_out.rhand.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d);
-                backcrop_out.rhand.bboxes.at(camid) = bbox2d;
+                // backcrop_out.rhand.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d).clone();
+                // backcrop_out.rhand.bboxes.at(camid) = bbox2d;
+                xmins.at(cidx).push_back((int) xmin);
+                ymins.at(cidx).push_back((int) ymin);
+                xmaxs.at(cidx).push_back((int) xmax);
+                ymaxs.at(cidx).push_back((int) ymax);
             }
             else if (aabb.ClassID == 2){
-                backcrop_out.face.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d);
-                backcrop_out.face.bboxes.at(camid) = bbox2d;
-            }
-            else if (aabb.ClassID == 3){
-                backcrop_out.body.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d);
-                backcrop_out.body.bboxes.at(camid) = bbox2d;
+                // backcrop_out.face.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d).clone();
+                // backcrop_out.face.bboxes.at(camid) = bbox2d;
+                xmins.at(cidx).push_back((int) xmin);
+                ymins.at(cidx).push_back((int) ymin);
+                xmaxs.at(cidx).push_back((int) xmax);
+                ymaxs.at(cidx).push_back((int) ymax);
             }
         }
+    }
+    for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
+        cv::Rect bbox2d;
+        bbox2d.x = *std::min_element(xmins.at(cidx).begin(), xmins.at(cidx).end());
+        bbox2d.y = *std::min_element(ymins.at(cidx).begin(), ymins.at(cidx).end());
+        bbox2d.width = *std::max_element(xmaxs.at(cidx).begin(), xmaxs.at(cidx).end())-bbox2d.x;
+        bbox2d.height = *std::max_element(ymaxs.at(cidx).begin(), ymaxs.at(cidx).end())-bbox2d.y;
+        backcrop_out.body.back_crops.at(cidx) = backcrop_in.frame.at(cidx)(bbox2d).clone();
+        backcrop_out.body.bboxes.at(cidx) = bbox2d;
     }
 
     return true;

@@ -45,7 +45,8 @@ class BackCrop : public cpp_utils::StageBase<
 private:
     const flir_icp_calib::MultiCameras &cameras;
     const int n_vertices = 8; // n corners
-    std::vector<cv::Mat> downloaded{5};
+    const float width = 0.f;
+    const float height = 0.f;
     bool ProcessFunction(
         data::backcrop_in &backcrop_in,
         data::backcrop_out &backcrop_out
@@ -55,7 +56,7 @@ private:
 
 public:
     BackCrop(
-        const flir_icp_calib::MultiCameras &cameras
+        const flir_icp_calib::MultiCameras &cameras, const float &width, const float &height 
     );
     ~BackCrop(){};
     void Terminate(void);

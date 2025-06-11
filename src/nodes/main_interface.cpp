@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
     ros_node_interface::BaseRosInterface<modules::TrackingInterfaceModule> tracking_interface(
         std::move(trackingInterfaceModule)
     );
-    std::cout << "Main thread exiting (tracking_interface)..." << std::endl;
+    spdlog::info("Main thread exiting (tracking_interface)...");
 
     return 0;
 }

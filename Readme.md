@@ -1,6 +1,18 @@
 # Real-Time-3D-Tracking 
 
 
+BUGS:
+
+Backcrop: Error, assume out of image-points
+
+Point detection on back-cropped
+
+Pointer error
+
+Fix detection scaling bug
+
+
+
 This module is part of my  **ROS/ROS2** [real-time 3D tracker docker-implementation](https://github.com/HenrikTrom/ROSTrack-RT-3D).
 
 

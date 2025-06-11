@@ -26,7 +26,7 @@ KeyPoint3D calc3Dpoint_worker(
     flir_icp_calib::MultiCameras cameras
 );
 
-template<uint16_t NKPS>
+template<std::size_t NKPS>
 class Triangulate : public cpp_utils::StageBase<
    std::array<std::array<std::array<float, 2>, NKPS>, flirmulticamera::GLOBAL_CONST_NCAMS>, 
    std::array<KeyPoint3D, NKPS>>
@@ -39,7 +39,7 @@ bool ProcessFunction(
     std::array<KeyPoint3D, NKPS> &outputs
 ){
     std::vector<std::future<KeyPoint3D>> kpts_temp;
-    for (uint16_t j = 0; j < NKPS; j++)
+    for (std::size_t j = 0; j < NKPS; j++)
     {
         std::array<cv::Point2f, flirmulticamera::GLOBAL_CONST_NCAMS> pts;
         for(int cidx = 0; cidx < flirmulticamera::GLOBAL_CONST_NCAMS; cidx++)
@@ -54,9 +54,9 @@ bool ProcessFunction(
         ));
         // outputs.push_back(calc3Dpoint_worker(j, pts, inputs.timestamp, this->min_cams, this->cameras));
     }
-    for (uint16_t j = 0; j < NKPS; j++)
+    for (std::size_t j = 0; j < NKPS; j++)
     {
-        KeyPoint3D tmp = kpts_temp.at(j).get(); //DID not fix
+        KeyPoint3D tmp = kpts_temp.at(j).get(); 
         outputs.at(j) = tmp;
     }
     return true;
@@ -70,12 +70,43 @@ Triangulate(const flir_icp_calib::MultiCameras &cameras) : cameras(cameras)
     this->ThreadHandle.reset(new std::thread(&Triangulate::ThreadFunction, this));
 };
 ~Triangulate(){};
-void Terminate(void){
+void Terminate(void)
+{
     this->ShouldClose = true;
     this->ThreadHandle->join();
 };
-
+    
 };
+
+template<std::size_t NKPS>
+void DrawKPTs(
+    std::array<KeyPoint3D, NKPS> keypoints3D, 
+    flir_icp_calib::MultiCameras cameras, 
+    std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> images
+){
+    Eigen::MatrixXf pointMatrix(4, NKPS);
+    for (int j = 0; j < NKPS; ++j) {
+        pointMatrix.col(j).head<3>() = keypoints3D.at(j).coord;
+        pointMatrix(3, j) = 1.0f;
+    }
+
+    for (std::size_t cidx = 0;cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++)
+    {
+        Eigen::MatrixXf projected = cameras.Cam.at(cidx).P * pointMatrix;
+        Eigen::MatrixXf normalized = projected.array().rowwise() / projected.row(2).array();
+        
+        for (int j = 0; j < NKPS; ++j) {
+            cv::drawMarker(
+                images.at(cidx), 
+                cv::Point((int) normalized(0, j), (int) normalized(1, j)),
+                cv::Scalar(0, 0, 255)
+            );
+        }
+    }
+
+
+}
+
 
 } // namespace stages
 
