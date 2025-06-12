@@ -115,7 +115,7 @@ bool BackCrop::ProcessFunction(
                 xmaxs.at(cidx).push_back((int) xmax);
                 ymaxs.at(cidx).push_back((int) ymax);
             }
-            else if (aabb.ClassID == 3 && xmins.at(cidx).size() == 0){
+            else if (aabb.ClassID == 3 && xmins.at(cidx).size() < 3){
                 xmins.at(cidx).push_back((int) xmin);
                 ymins.at(cidx).push_back((int) ymin);
                 xmaxs.at(cidx).push_back((int) xmax);
