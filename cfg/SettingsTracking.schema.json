@@ -19,11 +19,6 @@
       "type": "string",
       "description": "Path to pose estimation model configuration file"
     },
-    "min_cams": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "Minimum number of cameras required"
-    },
     "online_mode": {
       "type": "boolean",
       "description": "Run in online/live mode"
@@ -40,7 +35,6 @@
     "cfg_camera_calibration",
     "cfg_det",
     "cfg_pose",
-    "min_cams",
     "online_mode",
     "compression_quality"
   ],

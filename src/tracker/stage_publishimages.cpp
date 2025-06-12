@@ -16,6 +16,7 @@ PublishImages::PublishImages(
         this->msg_imgs_compressed.images.at(camid).format = "jpeg";
         this->msg_imgs_compressed.images.at(camid).header.frame_id = "cam"+std::to_string(camid);
     }
+    spdlog::info("VIDEO LOGGING ROS @ {}", topic_name);
     this->ThreadHandle.reset(new std::thread(&PublishImages::ThreadfunctionPublish, this));
 }
 
@@ -27,7 +28,7 @@ void PublishImages::ThreadfunctionPublish(void){
     {
         {
             std::lock_guard<std::mutex> lck(this->mtx);
-            if ((this->GetInFIFOSize() < 50) && (!this->InFIFO.empty())){
+            if (!this->InFIFO.empty()){
                 data::publishimages_in &input = this->InFIFO.front();
                 for (std::size_t j = 0; j<flirmulticamera::GLOBAL_CONST_NCAMS; j++){
                     cv::imencode(".jpg", input.images.at(j), 

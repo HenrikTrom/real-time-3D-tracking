@@ -3,15 +3,10 @@ project(real_time_3d_tracking VERSION 1.0.0)
 set(real_time_3d_tracking ${PROJECT_VERSION})
 set(CMAKE_CXX_STANDARD 17)
 
-option(DEBUG_TIME_LOGGING "Enable cout for logging runtime" ON)
-option(DEBUG_SINGLE_IMAGE "Debug using static single image as input" OFF)
-# TODO: save images
-option(VIDEO_LOGGING_ROS "Publish the compressed video on a rostopic" ON)
-
-# set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Debug)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(DEBUG_TIME_LOGGING ON CACHE BOOL "Enable cout for logging runtime" FORCE)
+
 else()
   set(OPTIMIZATION_FLAGS $ENV{CPP_OPTIMIZATIONS})
   set(
@@ -100,25 +95,25 @@ target_include_directories(inference_benchmark PUBLIC ${IncludeDirsList})
 target_link_libraries(inference_benchmark PUBLIC ${LibrariesList})
 set_target_properties(inference_benchmark PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# # Interface
-# add_executable(interface src/nodes/main_interface.cpp ${TRACKER_SOURCES} ${AABB_SOURCES} ${KPS_SOURCES} ${COMMON})
-# add_dependencies(interface ${DependenciesList})
-# target_include_directories(interface PUBLIC ${IncludeDirsList})
-# target_link_libraries(interface PUBLIC ${LibrariesList})
-# set_target_properties(interface PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+# COLOR
+add_executable(interface_color src/nodes/main_interface.cpp ${TRACKER_SOURCES} ${AABB_SOURCES} ${KPS_SOURCES} ${COMMON})
+add_dependencies(interface_color ${DependenciesList})
+target_include_directories(interface_color PUBLIC ${IncludeDirsList})
+target_link_libraries(interface_color PUBLIC ${LibrariesList})
+set_target_properties(interface_color PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+# KPS133
+add_executable(interface_133 src/nodes/main_interface.cpp ${TRACKER_SOURCES} ${AABB_SOURCES} ${KPS_SOURCES} ${COMMON})
+add_dependencies(interface_133 ${DependenciesList})
+target_include_directories(interface_133 PUBLIC ${IncludeDirsList})
+target_link_libraries(interface_133 PUBLIC ${LibrariesList})
+set_target_properties(interface_133 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+  
+target_compile_definitions(inference_benchmark PUBLIC SINGLE_IMAGE_DEBUG=1)
+target_compile_definitions(inference_benchmark PUBLIC TRACK_KPS133=1)
 
-if(DEBUG_TIME_LOGGING)
-  target_compile_definitions(inference_benchmark PUBLIC USE_DEBUG_TIME_LOGGING=1)
-  # target_compile_definitions(interface PUBLIC USE_DEBUG_TIME_LOGGING=1)
-endif()
+target_compile_definitions(interface_133 PUBLIC TRACK_KPS133=1)
+target_compile_definitions(interface_133 PUBLIC VIDEO_LOGGING=1)
 
-if(VIDEO_LOGGING_ROS)
-  target_compile_definitions(inference_benchmark PUBLIC VIDEO_LOGGING=1)
-  # target_compile_definitions(interface PUBLIC VIDEO_LOGGING=1)
-endif()
-
-# if(DEBUG_SINGLE_IMAGE)
-#   target_compile_definitions(inference_benchmark PUBLIC SINGLE_IMAGE_DEBUG=1)
-#   # target_compile_definitions(interface PUBLIC SINGLE_IMAGE_DEBUG=1)
-# endif()
+target_compile_definitions(interface_color PUBLIC TRACK_COLOR=1)
+target_compile_definitions(interface_color PUBLIC VIDEO_LOGGING=1)

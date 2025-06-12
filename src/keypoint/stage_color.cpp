@@ -6,16 +6,14 @@ namespace rt3d_tracking
 namespace stages
 {
 
-// TODO load color config
 Color::Color(
     const flir_icp_calib::MultiCameras &cameras, const int &min_cams
 ) : cameras(cameras), min_cams(min_cams)
 {
     rapidjson::Document color_values;
-    // if (!load_settings(type, settings_doc)){return false;}
     if (!cpp_utils::load_json_with_schema(
-        "/home/docker/catkin_ws/src/online_tracking/cfg/stage_color_config.json",
-        "/home/docker/catkin_ws/src/online_tracking/cfg/stage_color_config.scheme.json",
+        std::string(CONFIG_DIR)+"/color_config.json",
+        std::string(CONFIG_DIR)+"/color_config.scheme.json",
         65536, color_values
     )){throw std::runtime_error("Could not load color stage config!");}
     auto tmpu = color_values["lower"].GetArray();
@@ -25,10 +23,7 @@ Color::Color(
     this->ThreadHandle.reset(new std::thread(&Color::ThreadFunction, this));
 }
 
-Color::~Color()
-{
-
-}
+Color::~Color(){}
 
 bool Color::ProcessFunction(
     data::kps_in &input, 
@@ -48,11 +43,9 @@ bool Color::ProcessFunction(
         }
         // Convert to HSV color space
         cv::cvtColor(img, hsvFrame, cv::COLOR_BGR2HSV);
-        
         // Threshold the image to get only purple colors
         cv::inRange(hsvFrame, this->lower, this->upper, mask);
         img.setTo(cv::Scalar(0, 255, 0), mask);
-        
         // Find contours
         std::vector<std::vector<cv::Point>> contours;
         std::vector<cv::Vec4i> hierarchy;
@@ -62,7 +55,6 @@ bool Color::ProcessFunction(
             pts.at(idx) = pt;
             continue;
         }
-
         // Find the largest contour
         size_t largestIdx = 0;
         double maxArea = 0.0;
@@ -73,21 +65,12 @@ bool Color::ProcessFunction(
                 largestIdx = i;
             }
         }
-        
         // Compute the centroid of the largest contour
         cv::Moments m = cv::moments(contours[largestIdx]);
-        // TODO: ADD debug code
         if (m.m00 != 0) {
             pt.x = static_cast<float>(m.m10 / m.m00)+input.bboxes.at(idx).x;
             pt.y = static_cast<float>(m.m01 / m.m00)+input.bboxes.at(idx).y;
-            // cv::drawMarker(
-            //     img, 
-            //     cv::Point2f(static_cast<float>(m.m10 / m.m00),static_cast<float>(m.m01 / m.m00)), 
-            //     cv::Scalar(0, 255, 0), 0, 20, 1
-            // );
-            // cv::imwrite("/home/docker/catkin_ws/src/online_tracking/inputs/"+std::to_string(idx)+"m.jpg", img);
-        } // return zeros otherwise, calc3dworker deals with this
-
+        } 
         pts.at(idx) = pt;
     }
     // triangulate

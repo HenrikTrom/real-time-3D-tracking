@@ -2,9 +2,6 @@
 
 using namespace rt3d_tracking;
 
-// open images
-// new stage
-// detect images -> write bbs
 int main(int argc, char **argv){
     ros::init(argc, argv, "online_tracking");
     ros::NodeHandle nh("~");
@@ -12,10 +9,13 @@ int main(int argc, char **argv){
     if (!modules::init_trackingInterfaceModule(nh, trackingInterfaceModule)){
         return 1;
     };
-    ros_node_interface::BaseRosInterface<modules::TrackingInterfaceModule> tracking_interface(
-        std::move(trackingInterfaceModule)
-    );
+    trackingInterfaceModule->start();
+
+    while (!trackingInterfaceModule->ShouldClose){
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
     spdlog::info("Main thread exiting (tracking_interface)...");
+    trackingInterfaceModule->Terminate();
 
     return 0;
 }

@@ -5,6 +5,7 @@
 #include "../config.h"
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <spdlog/spdlog.h>
 #include "flirmulticamera/hardware_constants.h"
 
 namespace rt3d_tracking{

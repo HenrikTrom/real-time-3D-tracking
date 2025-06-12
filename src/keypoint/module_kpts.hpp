@@ -66,6 +66,7 @@ public:
     ~KPS(){};
     void Terminate(void)
     {
+        spdlog::info("--------- Terminating: KPS {} ---------", NKPS);
         this->ShouldClose=true;
         this->ThreadHandlePreprocessNN->join();
         this->ThreadHandleNNProstprocess->join();

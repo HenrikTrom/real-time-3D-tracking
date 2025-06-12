@@ -48,8 +48,12 @@ public:
     // modules
     std::unique_ptr<stages::PublishImages> stage_publishimages;
     std::unique_ptr<modules::AABB> module_aabb;
-    std::unique_ptr<modules::KPS<133, 384, 512>> module_kps_full;
-    // std::unique_ptr<stages::KPS_COLOR> stage_kps_color;
+    #ifdef TRACK_KPS133
+        std::unique_ptr<modules::KPS<133, 384, 512>> module_kps_full;
+    #endif
+    #ifdef TRACK_COLOR
+        std::unique_ptr<modules::KPS_COLOR> module_color;
+    #endif
 
 };
 

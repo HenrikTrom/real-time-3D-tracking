@@ -41,8 +41,9 @@ namespace modules{
         int min_cams=0;
         std::chrono::steady_clock::time_point now, last; // get publish speed
         std::chrono::milliseconds duration; 
-        double dt;                               
-        const double alpha = 0.1;
+        double dt;
+        double total_t = 0;
+        double steps = 0;    
         ros::Time ros_time;
         //stage-base-stuff
         bool ShouldClose = false;
@@ -50,13 +51,20 @@ namespace modules{
 
         
         public:
-        KPS_COLOR(ros::NodeHandle &nh, const flir_icp_calib::MultiCameras &cameras, const double &fps);
+        KPS_COLOR(
+            ros::NodeHandle &nh, const std::string &topic_name, 
+            const flir_icp_calib::MultiCameras &cameras, const double &fps
+        );
         ~KPS_COLOR(){};
         void Terminate(void);
 
         uint16_t GetInFIFOSize(void);
         void InPost(data::kps_in kps_in);
         bool IsReady(void);
+
+        #ifdef SINGLE_IMAGE_DEBUG
+            std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> DebugImgs;
+        #endif
 
 };
 

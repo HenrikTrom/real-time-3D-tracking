@@ -2,6 +2,7 @@
 
 #include "tracker/StagePublish.hpp"
 #include <keiko_msgs/Tracklets.h>
+#include <spdlog/spdlog.h>
 #include "aabb/BoundingBox.h"
 
 namespace rt3d_tracking{

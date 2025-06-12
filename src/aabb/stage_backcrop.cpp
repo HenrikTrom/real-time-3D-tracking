@@ -115,8 +115,20 @@ bool BackCrop::ProcessFunction(
                 xmaxs.at(cidx).push_back((int) xmax);
                 ymaxs.at(cidx).push_back((int) ymax);
             }
+            else if (aabb.ClassID == 3 && xmins.at(cidx).size() == 0){
+                xmins.at(cidx).push_back((int) xmin);
+                ymins.at(cidx).push_back((int) ymin);
+                xmaxs.at(cidx).push_back((int) xmax);
+                ymaxs.at(cidx).push_back((int) ymax);
+            }
         }
     }
+
+    if (xmins.at(0).size() == 0)
+    {
+        return false;
+    }
+
     for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
         cv::Rect bbox2d;
         bbox2d.x = *std::min_element(xmins.at(cidx).begin(), xmins.at(cidx).end());

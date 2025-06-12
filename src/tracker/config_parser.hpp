@@ -10,9 +10,8 @@ struct config_tracking
     std::string cfg_camera_calibration = "ERRORcfg_camera_calibrationNotSpecified";
     std::string cfg_det = "ERRORcfg_detNotSpecified";
     std::string cfg_pose = "ERRORcfg_bposeNotSpecified";
-    int min_cams = 0;
     bool online_mode = false; // live images y/n?
-    int compression_quality = 100;
+    int compression_quality = 50;
     std::vector<int> compression_params;
 };
 

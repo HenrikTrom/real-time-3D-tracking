@@ -1,16 +1,16 @@
 # Real-Time-3D-Tracking 
 
+TODO:
 
-BUGS:
+Online Test
+- benchmark
+- video
+- 133
+- color
+- better cameras (fix aabbs?)
+- Video Logging
 
-Backcrop: Error, assume out of image-points
-
-Point detection on back-cropped
-
-Pointer error
-
-Fix detection scaling bug
-
+- Fix clock in cameras and pass timestamps
 
 
 This module is part of my  **ROS/ROS2** [real-time 3D tracker docker-implementation](https://github.com/HenrikTrom/ROSTrack-RT-3D).

@@ -28,47 +28,52 @@ bool TrackingInterfaceModule::start(){
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     // KPS_FULL_133
-    this->module_kps_full.reset(
-        new modules::KPS<133, 384, 512>(
-            this->nh,
-            this->cfg.cfg_pose,
-            this->cameras,
-            this->cam_settings.fps,
-            std::string(BOPDYPOSE133)
-        )
-    );
-    
-    while(!this->module_kps_full->IsReady()){
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    #ifdef TRACK_KPS133
+        this->module_kps_full.reset(
+            new modules::KPS<133, 384, 512>(
+                this->nh,
+                this->cfg.cfg_pose,
+                this->cameras,
+                this->cam_settings.fps,
+                std::string(BOPDYPOSE133)
+            )
+        );
+        while(!this->module_kps_full->IsReady()){
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    #endif
     // KPS_COLOR
-    // this->stage_kps_color.reset(
-    //     new stages::KPS_COLOR(this->nh, this->cameras, this->cam_settings.fps)
-    // );
-    // while(!this->stage_kps_color->IsReady()){
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    // }
+    #ifdef TRACK_COLOR
+        this->module_color.reset(
+            new modules::KPS_COLOR(this->nh, std::string(COLOR_MARKER), this->cameras, this->cam_settings.fps)
+        );
+        while(!this->module_color->IsReady()){
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    #endif
     // camera
     this->ShouldClose = false;
-    if (this->cfg.online_mode) {
-        this->ThreadHandleCamera.reset( // online tracking
-                new std::thread(&TrackingInterfaceModule::ThreadCameraOnline, this)
+    #ifdef SINGLE_IMAGE_DEBUG // use single img
+        this->ThreadHandleCamera.reset(
+            new std::thread(&TrackingInterfaceModule::ThreadCameraSingleImg, this)
         );
-        spdlog::info("-------------- Mode: Online ------------");
-    } 
-    else {
-        #ifdef SINGLE_IMAGE_DEBUG // use single img
-            this->ThreadHandleCamera.reset(
-                new std::thread(&TrackingInterfaceModule::ThreadCameraSingleImg, this)
+        spdlog::info("------- Mode: DEBUG SINGLE IMAGE -------");
+    #else // use dynamic input
+        if (this->cfg.online_mode)
+        {
+            spdlog::info("-------------- Mode: Online ------------");
+            this->ThreadHandleCamera.reset( // online tracking
+                    new std::thread(&TrackingInterfaceModule::ThreadCameraOnline, this)
             );
-            spdlog::info("------- Mode: DEBUG SINGLE IMAGE -------");
-        #else // use video
+        } 
+        else {
+            spdlog::info("-------------- Mode: Video -------------");
             this->ThreadHandleCamera.reset(
                 new std::thread(&TrackingInterfaceModule::ThreadCameraOffline, this)
             );
-            spdlog::info("-------------- Mode: Video -------------");
-        #endif
-    }
+        }
+    #endif
+    
     spdlog::info("----------------------------------------");
     this->ThreadHandleAABB_KPS.reset(new std::thread(&TrackingInterfaceModule::ThreadAABB_KPS, this)); 
 
@@ -83,13 +88,16 @@ void TrackingInterfaceModule::Terminate()
     this->ThreadHandleCamera->join();
     this->ThreadHandleAABB_KPS->join();
     this->module_aabb->Terminate();
-    this->module_kps_full->Terminate();
-    // this->stage_kps_color->Terminate();
+    #ifdef TRACK_KPS133
+        this->module_kps_full->Terminate();
+    #endif
+    #ifdef TRACK_COLOR
+        this->module_color->Terminate();
+    #endif
     #ifdef VIDEO_LOGGING
         this->stage_publishimages->Terminate();
     #endif
 };
-
 
 // Threads
 void TrackingInterfaceModule::ThreadAABB_KPS()
@@ -99,9 +107,12 @@ void TrackingInterfaceModule::ThreadAABB_KPS()
         if (this->module_aabb->Get(aabb_out)){
             // this->stage_kps_hand->InPost(aabb_out.rhand);
             // this->stage_kps_lhand->InPost(aabb_out.lhand);
-            this->module_kps_full->InPost(aabb_out.body);
-            // this->stage_kps_face->InPost(aabb_out.face);
-            // this->stage_kps_color->InPost(aabb_out.rhand);
+            #ifdef TRACK_KPS133
+                this->module_kps_full->InPost(aabb_out.body);
+            #endif
+            #ifdef TRACK_COLOR
+                this->module_color->InPost(aabb_out.rhand);
+            #endif
         }
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
@@ -121,7 +132,14 @@ void TrackingInterfaceModule::ThreadCameraSingleImg()
     #ifdef SINGLE_IMAGE_DEBUG
         for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
             this->module_aabb->DebugImgs.at(cidx) = this->cpuImgs.at(cidx).clone();
-            this->module_kps_full->DebugImgs.at(cidx) = this->cpuImgs.at(cidx).clone();
+            
+            #ifdef TRACK_KPS133
+                this->module_kps_full->DebugImgs.at(cidx) = this->cpuImgs.at(cidx).clone();
+            #endif
+            #ifdef TRACK_COLOR
+                this->module_color->DebugImgs.at(cidx) = this->cpuImgs.at(cidx).clone();
+            #endif
+            
         }
     #endif
 
@@ -141,61 +159,44 @@ void TrackingInterfaceModule::ThreadCameraSingleImg()
         std::this_thread::sleep_for(std::chrono::milliseconds(14));
     }
     progressBar.finish();
+    while (this->module_aabb->GetInFIFOSize() != 0 && this->module_aabb->GetOutFIFOSize() != 0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(MAX_INFERENCE_ITER*5));
+    this->ShouldClose = true;
 };
 
 void TrackingInterfaceModule::ThreadCameraOffline()
 {
     data::aabb_in PreprocessAABB;
-    std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> cpuImgsTest;
-    std::array<cv::VideoCapture, flirmulticamera::GLOBAL_CONST_NCAMS> video_readers;
-    std::string error_msg;
-    std::string video_dir = "/home/docker/catkin_ws/experiments/human_data2/videos/";
-    std::array<std::string, flirmulticamera::GLOBAL_CONST_NCAMS> filenames;
-    for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
-        filenames.at(cidx) = std::string(RESOURCES_VIDEOS)+"/"+
-            std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))
-            +".mp4";
-    }
-    for (std::size_t cidx = 0; cidx<filenames.size(); cidx++) {
-        if (!std::filesystem::exists(filenames.at(cidx)))
-        {
-            error_msg = "File "+filenames.at(cidx)+" does not exist";
-            throw std::runtime_error(error_msg);
-        }
+    const std::string video_dir = std::string(CONFIG_DIR) + "/../test/inputs/videos/";
+    const std::string extension = ".mp4";
+    std::array<std::string, flirmulticamera::GLOBAL_CONST_NCAMS> fnames = cpp_utils::get_filenames<flirmulticamera::GLOBAL_CONST_NCAMS>(video_dir, extension);
 
-        video_readers.at(cidx) = cv::VideoCapture(filenames.at(cidx));
-    }
+    cpp_utils::SyncVideoIterator iterator(video_dir, fnames);
 
     std::size_t framecount = 0;
-    const std::size_t max_frames = video_readers.at(0).get(cv::CAP_PROP_FRAME_COUNT);
+    const std::size_t max_frames = iterator.get_framecount();
     cpp_utils::ProgressBar progressBar(max_frames);
     progressBar.update(framecount);
     while (!this->ShouldClose)
     {
         if (this->module_aabb->GetInFIFOSize() < cpp_utils::MAXINFIFOSIZE)
         {
+            iterator.get_next(this->cpuImgs);
             for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++) 
             {
-                if (!video_readers.at(cidx).read(this->cpuImgs.at(cidx)))
-                {
-                    spdlog::error("Video {} at {}: Could not get frame");
-                }
-                else
-                {
-                    PreprocessAABB.frame.at(cidx).upload(this->cpuImgs.at(cidx));
-                    cv::cuda::cvtColor(PreprocessAABB.frame.at(cidx), PreprocessAABB.frame.at(cidx), cv::COLOR_BGR2RGB);
-                }
+                PreprocessAABB.frame.at(cidx).upload(this->cpuImgs.at(cidx));
+                cv::cuda::cvtColor(PreprocessAABB.frame.at(cidx), PreprocessAABB.frame.at(cidx), cv::COLOR_BGR2RGB);
             }
             clock_gettime(CLOCK_REALTIME, &PreprocessAABB.timestamp);
             this->module_aabb->InPost(PreprocessAABB);
             framecount ++;
-            if (framecount == max_frames) // reset
+            if (framecount == max_frames)
             {
                 framecount = 0;
-                for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++)
-                {
-                    video_readers.at(cidx).set(cv::CAP_PROP_POS_FRAMES, 0);
-                }
+                iterator.reset();
             }
             progressBar.update(framecount);
         }
@@ -216,7 +217,6 @@ void TrackingInterfaceModule::ThreadCameraOnline()
 
     #ifdef VIDEO_LOGGING
         this->stage_publishimages.reset(new stages::PublishImages{this->nh, "images_compressed", 60, 60});
-        spdlog::info("VIDEO LOGGING ROS @ {}", TOPIC_IMAGES_COMPRESSED);
     #else 
         spdlog::info("VIDEO LOGGING ROS: OFF");
     #endif
@@ -225,7 +225,7 @@ void TrackingInterfaceModule::ThreadCameraOnline()
     std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> imgs;
     while(!this->ShouldClose){
         if(fcamerahandler.Get(frame)){
-            if (this->module_aabb->GetInFIFOSize() < 10){
+            if (this->module_aabb->GetInFIFOSize() < cpp_utils::MAXINFIFOSIZE){
                 data::aabb_in PreprocessAABB;
                 clock_gettime(CLOCK_REALTIME, &PreprocessAABB.timestamp);
                 for (std::size_t i = 0; i<flirmulticamera::GLOBAL_CONST_NCAMS; i++){
@@ -246,8 +246,6 @@ void TrackingInterfaceModule::ThreadCameraOnline()
                     pub_data.images = this->cpuImgs;
                     this->stage_publishimages->Post(pub_data);
                 #endif
-                
-                // std::cout << "Queue Size" << global_det_q.size() );
             }
         }
         std::this_thread::sleep_for(std::chrono::microseconds(10));

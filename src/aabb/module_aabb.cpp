@@ -157,6 +157,7 @@ void AABB::ThreadAABBBackCrop(){
 }
 
 void AABB::Terminate(void){
+    spdlog::info("----------- Terminating: AABB ----------");
     this->ShouldClose=true;
     this->ThreadHandlePreprocessNN->join();
     this->ThreadHandleNNProstprocess->join();
@@ -171,7 +172,6 @@ void AABB::Terminate(void){
     this->aabbcalc_stage->Terminate();
     this->backcrop_stage->Terminate();
     this->publish_stage->Terminate();
-    spdlog::info("----------- Terminating: AABB ----------");
 }
 
 bool AABB::Get(data::backcrop_out &DataOut)
@@ -191,7 +191,6 @@ uint16_t AABB::GetInFIFOSize(void)
 uint16_t AABB::GetOutFIFOSize(void)
 {
     return this->backcrop_stage->GetOutFIFOSize();
-    return 1;
 }
 
 bool AABB::IsReady(void)

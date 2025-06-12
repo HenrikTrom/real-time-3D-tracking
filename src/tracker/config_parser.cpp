@@ -10,12 +10,10 @@ bool load_tracking_config(config_tracking &cfg_pipeline){
         throw std::runtime_error("Could not load pipeline config");
         return false;
     }
-    // pipeline
     cfg_pipeline.cfg_multicamera = doc["cfg_multicamera"].GetString();
     cfg_pipeline.cfg_camera_calibration = doc["cfg_camera_calibration"].GetString();
     cfg_pipeline.cfg_det = doc["cfg_det"].GetString();
     cfg_pipeline.cfg_pose = doc["cfg_pose"].GetString();
-    cfg_pipeline.min_cams = doc["min_cams"].GetInt();
     cfg_pipeline.online_mode = doc["online_mode"].GetBool();
     cfg_pipeline.compression_quality = doc["compression_quality"].GetInt();
     return true;

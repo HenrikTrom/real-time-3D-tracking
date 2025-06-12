@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="ns" default="flir_ros_interface" />
+<arg name="autostart" default="true" />
+<arg name="visualize" default="true" />
+
+<group ns="$(arg ns)">
+
+    <node name="tracker" type="inference_benchmark" pkg="real_time_3d_tracking" output="screen">
+    </node>
+</group>
+
+</launch>

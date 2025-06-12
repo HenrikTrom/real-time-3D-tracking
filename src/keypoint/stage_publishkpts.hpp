@@ -19,8 +19,8 @@ public:
     PublishKPTS(ros::NodeHandle &nh, const std::string &topic_name, const int queue_size)
     {
         this->init(nh, topic_name, queue_size);
-        this->msg.header.frame_id = "cam0";
-        this->msg.id = 0; // TODO: change id according to class
+        this->msg.header.frame_id = std::string(FRAME_TRACKER);
+        this->msg.id = 0;
         this->msg.type = visualization_msgs::Marker::SPHERE_LIST;
         this->msg.action = visualization_msgs::Marker::ADD;
         this->msg.scale.x = 0.01;
@@ -31,13 +31,10 @@ public:
         this->msg.color.g = 1.0;
         this->msg.color.b = 0.0;
         this->msg.lifetime = ros::Duration(0.5);
+        spdlog::info("Publish Keypoints{} ROS @ {}", NKPS, topic_name);
         this->ThreadHandle.reset(new std::thread(&PublishKPTS::ThreadfunctionPublish, this));
     };
-    ;
     ~PublishKPTS(){};
-    void Terminate(){
-        spdlog::info("Averate Pulish Time: {} milliseconds over {} samples", this->total_t/this->steps, this->steps);
-    }
 
 private:
     void ThreadfunctionPublish()
@@ -65,29 +62,34 @@ private:
                     this->msg.points.push_back(p);
                 }
                 this->InFIFO.pop();
-                // if (true){
-                    this->now = std::chrono::steady_clock::now();
-                    this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->now - this->last);
-                    this->dt = (1-this->alpha)*this->dt+this->alpha*(float) this->duration.count();
-                    this->total_t += (int) dt;
-                    this->steps++;
-                    this->last = this->now;
-                // }
+                this->now = std::chrono::steady_clock::now();
+                this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->now - this->last);
+                this->dt = (1.-ALPHA_TIMELOGGING)*this->dt+ALPHA_TIMELOGGING*static_cast<float>(this->duration.count());
+                this->total_t += (double) dt;
+                this->steps += 1.;
+                this->last = this->now;
                 this->pub.publish(this->msg);
             }
             std::this_thread::sleep_for(std::chrono::microseconds(10));
         }
         std::this_thread::sleep_for(std::chrono::microseconds(10));
+        if (!this->steps == 0.){
+            spdlog::info(
+                "Average Publish Time KPTS{}: {} milliseconds over {} samples", 
+                NKPS, static_cast<int>(this->total_t/this->steps), static_cast<int>(this->steps)
+            );
+        }
+        else{
+            spdlog::info("Average Publish Time KPTS{}: 0 milliseconds over 0 samples", NKPS);
+        }
     };
     std::chrono::steady_clock::time_point now, last; // get publish speed
     std::chrono::milliseconds duration; 
-    float dt;      
-    float alpha = 0.9;
-    std::size_t total_t = 0;
-    std::size_t steps = 0;                         
+    float dt;
+    double total_t = 0.;
+    double steps = 0.;                         
 
 };
-
 
 } // namespace stages
 

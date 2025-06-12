@@ -11,6 +11,7 @@ PublishAABB::PublishAABB(
 ){
     this->init(nh, std::string(TOPIC_AABB), queue_size);
     this->ThreadHandle.reset(new std::thread(&PublishAABB::ThreadfunctionPublish, this));
+    spdlog::info("Publish aabbs ROS @ {}", TOPIC_AABB);
 }
 
 void PublishAABB::ThreadfunctionPublish(void){
@@ -49,7 +50,6 @@ void PublishAABB::ThreadfunctionPublish(void){
         this->pub.publish(this->msg);
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
-    // TODO: fix hardcoding
     std::this_thread::sleep_for(std::chrono::microseconds(10));
 }
 
