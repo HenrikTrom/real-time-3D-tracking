@@ -3,7 +3,7 @@
     "trtModelPath": "",
     "engineFileDir": "/home/docker/workspace/workspace/src/real-time-3D-tracking/models/keypoint/",
     "precision": "FP16",
-    "confidence_threshold": 0.5,
+    "confidence_threshold": 0.7,
     "modelInputWidth": 192,
     "calibrationBatchSize": 128
 }

@@ -42,9 +42,11 @@ namespace modules{
         std::chrono::steady_clock::time_point now, last; // get publish speed
         std::chrono::milliseconds duration; 
         double dt;
-        double total_t = 0;
-        double steps = 0;    
-        ros::Time ros_time;
+        double total_t{0};
+        double steps{0};
+        long long total_lat{0};
+        timespec ts;
+
         //stage-base-stuff
         bool ShouldClose = false;
         bool IsReady_flag = false;

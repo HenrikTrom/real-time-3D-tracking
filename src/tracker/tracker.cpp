@@ -30,7 +30,7 @@ bool TrackingInterfaceModule::start(){
     // KPS_FULL_133
     #ifdef TRACK_KPS133
         this->module_kps_full.reset(
-            new modules::KPS<133, 384, 512>(
+            new modules::KPS<133, feat_w, feat_h>(
                 this->nh,
                 this->cfg.cfg_pose,
                 this->cameras,
@@ -97,6 +97,15 @@ void TrackingInterfaceModule::Terminate()
     #ifdef VIDEO_LOGGING
         this->stage_publishimages->Terminate();
     #endif
+    if (!this->steps == 0.){
+    spdlog::info(
+        "Average Camera Cycle: {} milliseconds over {} samples, should be {} ms", 
+        static_cast<int>(this->total_t/this->steps), static_cast<int>(this->steps), (int ) (1000./this->cam_settings.fps)
+    );
+    }
+    else{
+        spdlog::info("Average Camera Cycle: 0 milliseconds over 0 samples");
+    }
 };
 
 // Threads
@@ -152,6 +161,7 @@ void TrackingInterfaceModule::ThreadCameraSingleImg()
             std::array<cv::cuda::GpuMat, flirmulticamera::GLOBAL_CONST_NCAMS> tmp = PreProcessIn;
             data::aabb_in PreprocessAABB;
             PreprocessAABB.frame = PreProcessIn;
+            clock_gettime(CLOCK_MONOTONIC, &PreprocessAABB.timestamp);
             this->module_aabb->InPost(PreprocessAABB);
             progressBar.update(i);
         }
@@ -190,7 +200,7 @@ void TrackingInterfaceModule::ThreadCameraOffline()
                 PreprocessAABB.frame.at(cidx).upload(this->cpuImgs.at(cidx));
                 cv::cuda::cvtColor(PreprocessAABB.frame.at(cidx), PreprocessAABB.frame.at(cidx), cv::COLOR_BGR2RGB);
             }
-            clock_gettime(CLOCK_REALTIME, &PreprocessAABB.timestamp);
+            clock_gettime(CLOCK_MONOTONIC, &PreprocessAABB.timestamp);
             this->module_aabb->InPost(PreprocessAABB);
             framecount ++;
             if (framecount == max_frames)
@@ -201,7 +211,7 @@ void TrackingInterfaceModule::ThreadCameraOffline()
             progressBar.update(framecount);
         }
         // publish delay
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     progressBar.finish();
 };
@@ -223,11 +233,13 @@ void TrackingInterfaceModule::ThreadCameraOnline()
 
     std::array<flirmulticamera::Frame, flirmulticamera::GLOBAL_CONST_NCAMS> frame;
     std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> imgs;
+    this->last = std::chrono::steady_clock::now();
     while(!this->ShouldClose){
-        if(fcamerahandler.Get(frame)){
-            if (this->module_aabb->GetInFIFOSize() < cpp_utils::MAXINFIFOSIZE){
+        if(fcamerahandler.Get(frame))
+        {
+            if (this->module_aabb->GetInFIFOSize() < 5){
                 data::aabb_in PreprocessAABB;
-                clock_gettime(CLOCK_REALTIME, &PreprocessAABB.timestamp);
+                clock_gettime(CLOCK_MONOTONIC, &PreprocessAABB.timestamp);
                 for (std::size_t i = 0; i<flirmulticamera::GLOBAL_CONST_NCAMS; i++){
                     this->cpuImgs.at(i) = cv::Mat(
                         frame.at(i).frameData->GetHeight(), 
@@ -247,6 +259,11 @@ void TrackingInterfaceModule::ThreadCameraOnline()
                     this->stage_publishimages->Post(pub_data);
                 #endif
             }
+            this->now = std::chrono::steady_clock::now();
+            this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->now - this->last);
+            this->total_t += (double) this->duration.count();
+            this->steps += 1.;
+            this->last = this->now;
         }
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
@@ -264,9 +281,18 @@ bool init_trackingInterfaceModule(
         return false;
     };
     flirmulticamera::CameraSettings cam_settings;
-    if (!flirmulticamera::load_camera_settings(cfg.cfg_multicamera, cam_settings)){
-        throw std::runtime_error("Could not load Camera settings");
-        return false;
+    if (cfg.online_mode)
+    {
+        if (!flirmulticamera::load_camera_settings(cfg.cfg_multicamera, cam_settings)){
+            throw std::runtime_error("Could not load Camera settings");
+            return false;
+        }
+    }
+    else
+    {
+        cam_settings.fps = 30;
+        cam_settings.width = 1024;
+        cam_settings.height = 768;
     }
     flir_icp_calib::MultiCameras cameras;
     if (!flir_icp_calib::load_calibration(cfg.cfg_camera_calibration, cameras))

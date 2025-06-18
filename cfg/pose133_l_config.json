@@ -1,0 +1,9 @@
+{
+    "onnxModelPath": "/home/docker/workspace/workspace/src/real-time-3D-tracking/models/keypoint/rtmpose384x288_5_fixed.onnx",
+    "trtModelPath": "",
+    "engineFileDir": "/home/docker/workspace/workspace/src/real-time-3D-tracking/models/keypoint/",
+    "precision": "FP16",
+    "confidence_threshold": 0.7,
+    "modelInputWidth": 288,
+    "calibrationBatchSize": 128
+}

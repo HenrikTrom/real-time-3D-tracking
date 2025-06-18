@@ -44,12 +44,12 @@ bool ProcessFunction(std::array<KeyPoint3D, NKPS> &inputs, std::array<KeyPoint3D
     for (uint16_t j = 0; j < NKPS; j ++)
     {
         // Remove lost points
-        if (this->buffer.at(j).NotSeenFor > 5)
+        if (this->buffer.at(j).NotSeenFor > 10)
         {
             this->buffer.at(j).ukf->state << 0,0,0,0,0,0;
         }
         KeyPoint3D point_tmp{};
-        if (this->buffer.at(j).SeenFor > 5){// only use points that are online for more than 5 iterations
+        if (this->buffer.at(j).SeenFor > 10){// only use points that are online for more than 5 iterations
             point_tmp.coord = this->buffer.at(j).coord;
         }
         else{
@@ -58,6 +58,7 @@ bool ProcessFunction(std::array<KeyPoint3D, NKPS> &inputs, std::array<KeyPoint3D
         point_tmp.id = this->buffer.at(j).id;
         outputs.at(j) = point_tmp;
     }
+    // outputs = inputs;
 
     this->frameCounter ++;
     return true;

@@ -33,6 +33,10 @@ private:
     keiko_msgs::ImgsListCompressed msg_imgs_compressed;
     std::vector<int> compression_params;
     bool test();
+    std::chrono::steady_clock::time_point now, last;
+    std::chrono::milliseconds duration;
+    double total_t{0};
+    double steps = 0.;
 
 };
 

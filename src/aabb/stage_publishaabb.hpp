@@ -24,7 +24,10 @@ class PublishAABB : public stages::StagePublish<
 {
 private:
     void ThreadfunctionPublish();
-
+    std::chrono::steady_clock::time_point now, last; // get publish speed
+    std::chrono::milliseconds duration; 
+    double total_t = 0.;
+    double steps = 0.;     
 
 public:
     PublishAABB(ros::NodeHandle &nh, const int queue_size);

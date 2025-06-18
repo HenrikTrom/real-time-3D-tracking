@@ -28,7 +28,9 @@ void PublishImages::ThreadfunctionPublish(void){
     {
         {
             std::lock_guard<std::mutex> lck(this->mtx);
-            if (!this->InFIFO.empty()){
+            if (!this->InFIFO.empty())
+            {
+                this->last = std::chrono::steady_clock::now();
                 data::publishimages_in &input = this->InFIFO.front();
                 for (std::size_t j = 0; j<flirmulticamera::GLOBAL_CONST_NCAMS; j++){
                     cv::imencode(".jpg", input.images.at(j), 
@@ -37,6 +39,10 @@ void PublishImages::ThreadfunctionPublish(void){
                     );
                 }
                 this->pub.publish(this->msg_imgs_compressed);
+                this->now = std::chrono::steady_clock::now();
+                this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->now - this->last);
+                this->total_t += (double) this->duration.count();
+                this->steps += 1.;
                 this->InFIFO.pop();
             }
         }
@@ -44,6 +50,15 @@ void PublishImages::ThreadfunctionPublish(void){
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
     std::this_thread::sleep_for(std::chrono::microseconds(10));
+    if (!this->steps == 0.){
+        spdlog::info(
+            "Average Publish Time ImagesCompressed: {} milliseconds over {} samples", 
+            static_cast<int>(this->total_t/this->steps), static_cast<int>(this->steps)
+        );
+    }
+    else{
+        spdlog::info("Average Publish Time ImagesCompressed: 0 milliseconds over 0 samples");
+    }
 }
 
 } // namespace stages

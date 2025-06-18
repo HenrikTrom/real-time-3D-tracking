@@ -62,6 +62,7 @@ AABBCalculate::AABBCalculate(
     const flir_icp_calib::MultiCameras &cameras) : cfg_aabbcalc(cfg_aabbcalc), cameras(cameras)
 {
     this->postProcess = AABB_PostProcess;
+    this->type = "AABBCalc";
     this->ThreadHandle.reset(new std::thread(&AABBCalculate::ThreadFunction, this));
 }
 
@@ -69,27 +70,56 @@ bool AABBCalculate::ProcessFunction(
     std::vector<std::vector<data::BoundingBox2D>> &aabbcalc_in,
     std::vector<data::AABB> &aabbcalc_out
 ){
-    // auto &BB2Ds = this->InFIFO.front();
+    #ifdef USE_DEBUG_TIME_LOGGING
+        this->t1 = std::chrono::steady_clock::now();
+    #endif
 
     std::vector<std::future<data::AABB>> AABBs_temp;
+    // for (auto &BB2D : aabbcalc_in)
+    // {
+    //     AABBs_temp.push_back(async(std::launch::async, CalcAABBfrom2DBBs, BB2D, this->cfg_aabbcalc.UseConvexhull, this->cameras));
+    // }
+    // std::this_thread::sleep_for(std::chrono::microseconds(5)); // is this needed for synchronisation
+    // for (auto &aabb_tmp : AABBs_temp)
+    // {
+    //     auto aabb = aabb_tmp.get();
+    //     aabbcalc_out.push_back(aabb);
+    // }
     for (auto &BB2D : aabbcalc_in)
     {
-        AABBs_temp.push_back(async(std::launch::async, CalcAABBfrom2DBBs, BB2D, this->cfg_aabbcalc.UseConvexhull, this->cameras));
-    }
-    std::this_thread::sleep_for(std::chrono::microseconds(1)); // is this needed for synchronisation
-    for (auto &aabb_tmp : AABBs_temp)
-    {
-        auto aabb = aabb_tmp.get();
+        auto aabb = CalcAABBfrom2DBBs(BB2D, this->cfg_aabbcalc.UseConvexhull, this->cameras);
         aabbcalc_out.push_back(aabb);
     }
+
     this->postProcess(aabbcalc_out);
-    
+    #if defined(USE_DEBUG_TIME_LOGGING)
+        this->t2 = std::chrono::steady_clock::now();
+        this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->t2 - this->t1);
+        this->n_iterations++;
+        this->total_dt += this->duration;
+    #endif
+
     return true;
 }
 
 void AABBCalculate::Terminate(void){
     this->ShouldClose=true;
     this->ThreadHandle->join();
+    #ifdef USE_DEBUG_TIME_LOGGING
+        if (this->n_iterations != 0){
+            spdlog::info(
+                "Average {} Time: {} milliseconds over {} samples",
+                this->type, this->total_dt.count()/this->n_iterations, 
+                this->n_iterations
+            );
+        }
+        else{
+            spdlog::info(
+                "Average {} Time: 0 milliseconds over 0 samples",
+                this->type
+            );
+        }
+    #endif
 }
 
 } // namespace stages

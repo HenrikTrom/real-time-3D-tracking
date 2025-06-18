@@ -21,8 +21,6 @@ constexpr std::size_t MAX_INFERENCE_SLEEP_MS = 20;
 constexpr std::size_t MAX_INFERENCE_ITER = 1000;
 
 constexpr std::size_t N_CLASSES_DETECTIOM = 4;
-constexpr std::size_t MIN_CAMS_TRIANGULATION = 3;
-
-constexpr float ALPHA_TIMELOGGING = 0.1;
+constexpr std::size_t MIN_CAMS_TRIANGULATION = 2;
 
 } // namespace rt3d_tracking

@@ -23,7 +23,6 @@ private:
         detection_inference::output_postprocess &corr_in,
         std::vector<std::vector<data::BoundingBox2D>> &corr_out
     );
-    // got from cameras
 
 public:
     Correspondance(const config_correspondance &cfg_corr, const flir_icp_calib::MultiCameras &cameras);

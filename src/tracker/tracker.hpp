@@ -15,6 +15,12 @@ namespace rt3d_tracking{
 
 namespace modules{
 
+// constexpr std::size_t feat_w = 576;
+// constexpr std::size_t feat_h = 768;
+
+constexpr std::size_t feat_w = 384;
+constexpr std::size_t feat_h = 512;
+
 class TrackingInterfaceModule : public ros_node_interface::BaseRosInterfaceModule
 {
 public:
@@ -43,18 +49,21 @@ public:
 
     std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> cpuImgs;
     uint32_t seq = 0;
-    timespec now{}; // set the timestamp
 
     // modules
     std::unique_ptr<stages::PublishImages> stage_publishimages;
     std::unique_ptr<modules::AABB> module_aabb;
     #ifdef TRACK_KPS133
-        std::unique_ptr<modules::KPS<133, 384, 512>> module_kps_full;
+        std::unique_ptr<modules::KPS<133, feat_w, feat_h>> module_kps_full;
     #endif
     #ifdef TRACK_COLOR
         std::unique_ptr<modules::KPS_COLOR> module_color;
     #endif
 
+    std::chrono::steady_clock::time_point now, last; // get publish speed
+    std::chrono::milliseconds duration;
+    double total_t = 0.;
+    double steps = 0.;
 };
 
 bool init_trackingInterfaceModule(

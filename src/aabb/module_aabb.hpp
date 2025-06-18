@@ -35,9 +35,9 @@ private:
     const config_aabbcalc cfg_aabbcalc;
     detection_inference::config_detection cfg_det;
     // stages
-    std::unique_ptr<detection_inference::PreProcessStage> detection_preprocess_stage;
-    std::unique_ptr<detection_inference::NNStage> detection_nn_stage;
-    std::unique_ptr<detection_inference::PostProcessStage> detection_postprocess_stage;
+    std::unique_ptr<detection_inference::PreProcessStage> preprocess_stage;
+    std::unique_ptr<detection_inference::NNStage> nn_stage;
+    std::unique_ptr<detection_inference::PostProcessStage> postprocess_stage;
     std::unique_ptr<stages::Correspondance> correspondance_stage;
     std::unique_ptr<stages::AABBCalculate> aabbcalc_stage;
     std::unique_ptr<stages::PublishAABB> publish_stage;

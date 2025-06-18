@@ -55,6 +55,10 @@ void KPS_COLOR::Terminate(void){
             "Average Publish Time Color: {} milliseconds over {} samples", 
             static_cast<int>(this->total_t/this->steps), static_cast<int>(this->steps)
         );
+        spdlog::info(
+            "Average Latency KPTColor: {} milliseconds over {} samples", 
+            this->total_lat/(long long)this->steps, static_cast<int>(this->steps)
+        );
     }
     else{
         spdlog::info("Average Publish Time Color: 0 milliseconds over 0 samples");
@@ -106,10 +110,9 @@ void KPS_COLOR::ThreadFilterPublish(){
         std::array<KeyPoint3D, 1> tracked3d;
         if (this->filter_stage->Get(tracked3d)){
             timespec& ts = this->global_time_q.front();
-            this->ros_time.sec = ts.tv_sec;
-            this->ros_time.nsec = ts.tv_nsec;
+            this->msg_kps.header.stamp.sec = ts.tv_sec;
+            this->msg_kps.header.stamp.nsec = ts.tv_nsec;
             this->msg_kps.header.frame_id = std::string(FRAME_TRACKER);
-            this->msg_kps.header.stamp = this->ros_time;
             this->msg_kps.points.clear();
             for (size_t i = 0; i < tracked3d.size(); i++)
             {
@@ -123,10 +126,21 @@ void KPS_COLOR::ThreadFilterPublish(){
             this->global_time_q.pop();
             this->now = std::chrono::steady_clock::now();
             this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->now - this->last);
-            this->dt = (1.-ALPHA_TIMELOGGING)*this->dt+ALPHA_TIMELOGGING*static_cast<float>(this->duration.count());
-            this->total_t += (double) dt;
+            this->total_t += (double) this->duration.count();
             this->steps += 1.;
             this->last = this->now;
+
+            timespec _ts, _diff;
+            clock_gettime(CLOCK_MONOTONIC, &_ts);
+            _diff.tv_sec = _ts.tv_sec - this->ts.tv_sec;
+            _diff.tv_nsec = _ts.tv_nsec - this->ts.tv_nsec;
+            if (_diff.tv_nsec < 0) {
+                _diff.tv_sec -= 1;
+                _diff.tv_nsec += 1000000000;
+            }
+
+            long long elapsed_ms = _diff.tv_sec * 1000LL + _diff.tv_nsec / 1000000;
+            this->total_lat += elapsed_ms;
         }
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }

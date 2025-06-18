@@ -35,7 +35,7 @@ public:
         this->postprocess_stage.reset(new pose_inference::PostProcessStage<NKPS, FEAT_W, FEAT_H>(this->cfg));
         this->triangulate_stage.reset(new stages::Triangulate<NKPS>(this->cameras));
         this->filter_stage.reset(new stages::Filter<NKPS>(fps));
-        this->publish_stage.reset(new stages::PublishKPTS<NKPS>(nh, topic_name, 60));
+        this->publish_stage.reset(new stages::PublishKPTS<NKPS>(nh, topic_name, 1));
         // start threads
         while(!this->preprocess_stage->IsReady()){
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -89,9 +89,10 @@ public:
     void InPost(data::kps_in &kps_in)
     {
         this->preprocess_stage->Post(kps_in.back_crops);
-        std::lock_guard<std::mutex> lck(this->mtx);
         {
+            std::lock_guard<std::mutex> lck(this->mtx);
             this->global_bbox_q.push(kps_in.bboxes);
+            this->publish_stage->global_time_q.push(kps_in.timestamp);
         }    
     };
     bool IsReady(void)

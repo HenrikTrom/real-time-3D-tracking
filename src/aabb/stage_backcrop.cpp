@@ -64,6 +64,7 @@ BackCrop::BackCrop(
 ) : cameras(cameras), width(width), height(height)
 {
     this->pointMatrix=Eigen::MatrixXf(4, this->n_vertices);
+    this->type = "BackCrop";
     this->ThreadHandle.reset(new std::thread(&BackCrop::ThreadFunction, this));
 }
 
@@ -71,8 +72,10 @@ bool BackCrop::ProcessFunction(
     data::backcrop_in &backcrop_in,
     data::backcrop_out &backcrop_out
 ){
-
-    std::array<std::vector<int>, 5> xmins, ymins, xmaxs, ymaxs;
+    #ifdef USE_DEBUG_TIME_LOGGING
+        this->t1 = std::chrono::steady_clock::now();
+    #endif
+    std::array<std::vector<int>, 5> xvals, yvals;
     for (auto & aabb: backcrop_in.aabbs)
     {
         for (int i = 0; i < this->n_vertices; ++i) {
@@ -91,60 +94,72 @@ bool BackCrop::ProcessFunction(
             this->ymin = std::clamp(this->normalized.row(1).minCoeff(), 0.f, this->height);
             this->ymax = std::clamp(this->normalized.row(1).maxCoeff(), 0.f, this->height);
             
-            if (aabb.ClassID == 0){
-                // backcrop_out.lhand.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d).clone();
-                // backcrop_out.lhand.bboxes.at(camid) = bbox2d;
-                xmins.at(cidx).push_back((int) xmin);
-                ymins.at(cidx).push_back((int) ymin);
-                xmaxs.at(cidx).push_back((int) xmax);
-                ymaxs.at(cidx).push_back((int) ymax);
+            if (aabb.ClassID == 0 || aabb.ClassID == 1 || aabb.ClassID == 2){
+                xvals.at(cidx).push_back((int) xmin);
+                xvals.at(cidx).push_back((int) xmax);
+                yvals.at(cidx).push_back((int) ymin);
+                yvals.at(cidx).push_back((int) ymax);
             }
-            else if (aabb.ClassID == 1){
-                // backcrop_out.rhand.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d).clone();
-                // backcrop_out.rhand.bboxes.at(camid) = bbox2d;
-                xmins.at(cidx).push_back((int) xmin);
-                ymins.at(cidx).push_back((int) ymin);
-                xmaxs.at(cidx).push_back((int) xmax);
-                ymaxs.at(cidx).push_back((int) ymax);
-            }
-            else if (aabb.ClassID == 2){
-                // backcrop_out.face.back_crops.at(camid) = backcrop_in.frame.at(camid)(bbox2d).clone();
-                // backcrop_out.face.bboxes.at(camid) = bbox2d;
-                xmins.at(cidx).push_back((int) xmin);
-                ymins.at(cidx).push_back((int) ymin);
-                xmaxs.at(cidx).push_back((int) xmax);
-                ymaxs.at(cidx).push_back((int) ymax);
-            }
-            else if (aabb.ClassID == 3 && xmins.at(cidx).size() < 3){
-                xmins.at(cidx).push_back((int) xmin);
-                ymins.at(cidx).push_back((int) ymin);
-                xmaxs.at(cidx).push_back((int) xmax);
-                ymaxs.at(cidx).push_back((int) ymax);
+            else if (aabb.ClassID == 3 && xvals.at(cidx).size() < 6){
+                xvals.at(cidx).push_back((int) xmin);
+                xvals.at(cidx).push_back((int) xmax);
+                yvals.at(cidx).push_back((int) ymin);
+                yvals.at(cidx).push_back((int) ymax);
             }
         }
     }
 
-    if (xmins.at(0).size() == 0)
+    if (xvals.at(0).size() == 0)
     {
         return false;
     }
 
     for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
         cv::Rect bbox2d;
-        bbox2d.x = *std::min_element(xmins.at(cidx).begin(), xmins.at(cidx).end());
-        bbox2d.y = *std::min_element(ymins.at(cidx).begin(), ymins.at(cidx).end());
-        bbox2d.width = *std::max_element(xmaxs.at(cidx).begin(), xmaxs.at(cidx).end())-bbox2d.x;
-        bbox2d.height = *std::max_element(ymaxs.at(cidx).begin(), ymaxs.at(cidx).end())-bbox2d.y;
+        bbox2d.x = *std::min_element(xvals.at(cidx).begin(), xvals.at(cidx).end());
+        bbox2d.y = *std::min_element(yvals.at(cidx).begin(), yvals.at(cidx).end());
+        bbox2d.width = *std::max_element(xvals.at(cidx).begin(), xvals.at(cidx).end())-bbox2d.x;
+        bbox2d.height = *std::max_element(yvals.at(cidx).begin(), yvals.at(cidx).end())-bbox2d.y;
+        if (bbox2d.width < 10 && bbox2d.height < 10) // filter out to small proposals
+        {
+            bbox2d.x = 0;
+            bbox2d.y = 0;
+            bbox2d.width = 10;
+            bbox2d.height = 10;
+        }
+
         backcrop_out.body.back_crops.at(cidx) = backcrop_in.frame.at(cidx)(bbox2d).clone();
         backcrop_out.body.bboxes.at(cidx) = bbox2d;
+        backcrop_out.body.timestamp = backcrop_in.timestamp;
     }
 
+    #if defined(USE_DEBUG_TIME_LOGGING)
+        this->t2 = std::chrono::steady_clock::now();
+        this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->t2 - this->t1);
+        this->n_iterations++;
+        this->total_dt += this->duration;
+    #endif
     return true;
 }
 
 void BackCrop::Terminate(void){
     this->ShouldClose=true;
     this->ThreadHandle->join();
+    #ifdef USE_DEBUG_TIME_LOGGING
+        if (this->n_iterations != 0){
+            spdlog::info(
+                "Average {} Time: {} milliseconds over {} samples",
+                this->type, this->total_dt.count()/this->n_iterations, 
+                this->n_iterations
+            );
+        }
+        else{
+            spdlog::info(
+                "Average {} Time: 0 milliseconds over 0 samples",
+                this->type
+            );
+        }
+    #endif
 }
 
 } // namespace stages

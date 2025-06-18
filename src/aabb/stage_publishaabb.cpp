@@ -20,11 +20,15 @@ void PublishAABB::ThreadfunctionPublish(void){
     {
         {
             std::lock_guard<std::mutex> lck(this->mtx);
-            if (!this->InFIFO.empty()){
+            if (!this->InFIFO.empty())
+            {
+                this->last = std::chrono::steady_clock::now();
                 data::publishaabb_in &input = this->InFIFO.front();
                 this->msg.positions.clear();
                 this->msg.widths.clear();
                 this->msg.est_vs.clear();
+                this->msg.class_ids.clear();
+                this->msg.instance_ids.clear();
                 this->msg.header.stamp = ros::Time(input.timestamp.tv_sec, input.timestamp.tv_nsec);
                 for (auto &aabb : input.aabbs){
                     geometry_msgs::Point position, width;
@@ -45,12 +49,25 @@ void PublishAABB::ThreadfunctionPublish(void){
                 }
 
                 this->InFIFO.pop();
+                this->now = std::chrono::steady_clock::now();
+                this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->now - this->last);
+                this->total_t += (double) this->duration.count();
+                this->steps += 1.;
+                this->pub.publish(this->msg);
             }
         }
-        this->pub.publish(this->msg);
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
     std::this_thread::sleep_for(std::chrono::microseconds(10));
+    if (!this->steps == 0.){
+        spdlog::info(
+            "Average Publish Time AABBs: {} milliseconds over {} samples", 
+            static_cast<int>(this->total_t/this->steps), static_cast<int>(this->steps)
+        );
+    }
+    else{
+        spdlog::info("Average Publish Time AABBs: 0 milliseconds over 0 samples");
+    }
 }
 
 } // namespace stages

@@ -11,6 +11,7 @@ Correspondance::Correspondance(
     const flir_icp_calib::MultiCameras &cameras
 ) : cfg_corr(cfg_corr), Cameras(cameras)
 {
+    this->type = "Correspondance";
     this->ThreadHandle.reset(new std::thread(&Correspondance::ThreadFunction, this));
 };
 
@@ -33,6 +34,9 @@ bool Correspondance::ProcessFunction(
     detection_inference::output_postprocess &corr_in,
     std::vector<std::vector<data::BoundingBox2D>> &corr_out
 ){
+    #ifdef USE_DEBUG_TIME_LOGGING
+        this->t1 = std::chrono::steady_clock::now();
+    #endif
     std::array<
         std::array<
             std::vector<data::BoundingBox2D>, 
@@ -88,7 +92,14 @@ bool Correspondance::ProcessFunction(
         // TODO: use array
         // corr out: cls-inst-corr
     }
+    
     // labels are IN BBs/AABBs
+    #if defined(USE_DEBUG_TIME_LOGGING)
+        this->t2 = std::chrono::steady_clock::now();
+        this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->t2 - this->t1);
+        this->n_iterations++;
+        this->total_dt += this->duration;
+    #endif
     return true;
 
 };
@@ -96,6 +107,21 @@ bool Correspondance::ProcessFunction(
 void Correspondance::Terminate(void){
     this->ShouldClose = true;
     this->ThreadHandle->join();
+    #ifdef USE_DEBUG_TIME_LOGGING
+        if (this->n_iterations != 0){
+            spdlog::info(
+                "Average {} Time: {} milliseconds over {} samples",
+                this->type, this->total_dt.count()/this->n_iterations, 
+                this->n_iterations
+            );
+        }
+        else{
+            spdlog::info(
+                "Average {} Time: 0 milliseconds over 0 samples",
+                this->type
+            );
+        }
+    #endif
 };
 
 } // namespace stages

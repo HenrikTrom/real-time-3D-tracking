@@ -2,6 +2,12 @@
 
 TODO:
 
+- Adjust cameras 2 front up, 2 sideways () top->front
+- include top camera in triangulation??
+- Add latency checks
+
+- cv resize error 
+
 Online Test
 - benchmark
 - video

@@ -12,21 +12,21 @@ AABB::AABB(
     // start stages
     std::unique_ptr<Engine<float>> engine;
     detection_inference::load_cfg_engine(cfg_type, this->cfg_det, engine);
-    this->detection_nn_stage.reset(new detection_inference::NNStage(this->cfg_det, std::move(engine)));
-    this->detection_preprocess_stage.reset(new detection_inference::PreProcessStage(this->cfg_det));
-    this->detection_postprocess_stage.reset(new detection_inference::PostProcessStage(this->cfg_det));
+    this->nn_stage.reset(new detection_inference::NNStage(this->cfg_det, std::move(engine)));
+    this->preprocess_stage.reset(new detection_inference::PreProcessStage(this->cfg_det));
+    this->postprocess_stage.reset(new detection_inference::PostProcessStage(this->cfg_det));
     this->correspondance_stage.reset(new stages::Correspondance(this->cfg_corr, this->cameras));
     this->aabbcalc_stage.reset(new stages::AABBCalculate(this->cfg_aabbcalc, this->cameras));
     this->backcrop_stage.reset(new stages::BackCrop(this->cameras, this->cfg_det.input_width, this->cfg_det.input_height));
     this->publish_stage.reset(new stages::PublishAABB(nh, 10));
     // start threads
-    while(!this->detection_nn_stage->IsReady()){
+    while(!this->nn_stage->IsReady()){
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    while(!this->detection_preprocess_stage->IsReady()){
+    while(!this->preprocess_stage->IsReady()){
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    while(!this->detection_postprocess_stage->IsReady()){
+    while(!this->postprocess_stage->IsReady()){
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     while(!this->correspondance_stage->IsReady()){
@@ -52,16 +52,16 @@ AABB::AABB(
 }
 
 void AABB::InPost(data::aabb_in &aabb_in){
-    this->detection_preprocess_stage->Post(aabb_in.frame);
+    this->preprocess_stage->Post(aabb_in.frame);
     this->global_det_q.push(aabb_in.frame);
-    this->global_time_q.push(aabb_in.timestamp);          
+    this->global_time_q.push(aabb_in.timestamp);
 }
 
 void AABB::ThreadPreprocessNN(){
     while (!this->ShouldClose) {
         std::vector<std::vector<cv::cuda::GpuMat>> NNIn;
-        if (this->detection_preprocess_stage->Get(NNIn)){
-            this->detection_nn_stage->Post(NNIn);
+        if (this->preprocess_stage->Get(NNIn)){
+            this->nn_stage->Post(NNIn);
         }
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
@@ -70,8 +70,8 @@ void AABB::ThreadPreprocessNN(){
 void AABB::ThreadNNPostProcess(){
     while (!this->ShouldClose) {
         std::vector<std::vector<std::vector<float>>> DetPostIn;
-        if (this->detection_nn_stage->Get(DetPostIn)){
-            this->detection_postprocess_stage->Post(DetPostIn);
+        if (this->nn_stage->Get(DetPostIn)){
+            this->postprocess_stage->Post(DetPostIn);
         }
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
@@ -84,7 +84,7 @@ void AABB::ThreadPostProcessCorrespondance(){
     #endif
     while (!this->ShouldClose) {
         detection_inference::output_postprocess CorrespondanceIn;
-        if (this->detection_postprocess_stage->Get(CorrespondanceIn)){
+        if (this->postprocess_stage->Get(CorrespondanceIn)){
             #ifdef SINGLE_IMAGE_DEBUG // draw bboxes
                 if (!saved){
                     for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
@@ -165,9 +165,9 @@ void AABB::Terminate(void){
     this->ThreadHandleCorenspondaceAABB->join();
     this->ThreadHandleAABBBackCrop->join();
 
-    this->detection_preprocess_stage->Terminate();
-    this->detection_nn_stage->Terminate();
-    this->detection_postprocess_stage->Terminate();
+    this->preprocess_stage->Terminate();
+    this->nn_stage->Terminate();
+    this->postprocess_stage->Terminate();
     this->correspondance_stage->Terminate(); 
     this->aabbcalc_stage->Terminate();
     this->backcrop_stage->Terminate();
@@ -185,7 +185,7 @@ bool AABB::Get(data::backcrop_out &DataOut)
 
 uint16_t AABB::GetInFIFOSize(void)
 {
-    return this->detection_preprocess_stage->GetInFIFOSize();
+    return this->preprocess_stage->GetInFIFOSize();
 }
 
 uint16_t AABB::GetOutFIFOSize(void)

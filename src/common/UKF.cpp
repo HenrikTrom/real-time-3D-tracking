@@ -110,7 +110,7 @@ void UKF::predict(VectorXf dp, float dt)
 
 void UKF::update(VectorXf Measurement)
 {
-    const int n_z = 3;
+    constexpr int n_z = 3;
     // convert the predicted sigma points into measure space
     MatrixXf Zsig{ n_z, this->m };
     Zsig.row(0) = this->SigmaPointsPred.row(0);     // assign x coord
@@ -156,7 +156,7 @@ void UKF::update(VectorXf Measurement)
 
 void UKF::update(VectorXf Measurement, int16_t seenby)
 {
-    const int n_z = 3;
+    constexpr int n_z = 3;
     // convert the predicted sigma points into measure space
     MatrixXf Zsig{ n_z, this->m };
     Zsig.row(0) = this->SigmaPointsPred.row(0);     // assign x coord

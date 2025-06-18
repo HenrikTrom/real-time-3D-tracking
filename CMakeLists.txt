@@ -47,6 +47,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   ros_node_interface
   flir_icp_calib
+  sensor_msgs
 )
 
 catkin_package(
@@ -88,7 +89,6 @@ set(
 
 # ============ EXECUTABLES ============
 # BENCHMARK
-
 add_executable(inference_benchmark src/nodes/main_benchmark.cpp ${TRACKER_SOURCES} ${AABB_SOURCES} ${KPS_SOURCES} ${COMMON})
 add_dependencies(inference_benchmark ${DependenciesList})
 target_include_directories(inference_benchmark PUBLIC ${IncludeDirsList})
@@ -110,10 +110,10 @@ target_link_libraries(interface_133 PUBLIC ${LibrariesList})
 set_target_properties(interface_133 PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
   
 target_compile_definitions(inference_benchmark PUBLIC SINGLE_IMAGE_DEBUG=1)
-target_compile_definitions(inference_benchmark PUBLIC TRACK_KPS133=1)
+target_compile_definitions(inference_benchmark PUBLIC TRACK_KPS133=1) 
 
 target_compile_definitions(interface_133 PUBLIC TRACK_KPS133=1)
-target_compile_definitions(interface_133 PUBLIC VIDEO_LOGGING=1)
+# target_compile_definitions(interface_133 PUBLIC VIDEO_LOGGING=1)
 
 target_compile_definitions(interface_color PUBLIC TRACK_COLOR=1)
-target_compile_definitions(interface_color PUBLIC VIDEO_LOGGING=1)
+# target_compile_definitions(interface_color PUBLIC VIDEO_LOGGING=1)
