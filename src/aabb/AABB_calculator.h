@@ -23,9 +23,9 @@ Eigen::VectorXf Calc2DProjectionTo3D(
 data::AABB CalcAABB(
     std::vector<data::BoundingBox2D> BoundingBoxes2D, flir_icp_calib::MultiCameras Cameras
 );
-void OptimiseAABB(
-    data::AABB& initialAABB, std::vector<data::BoundingBox2D> BoundingBoxes2D, bool UseConvexhull, flir_icp_calib::MultiCameras Cameras
-);
+// void OptimiseAABB(
+//     data::AABB& initialAABB, std::vector<data::BoundingBox2D> BoundingBoxes2D, bool UseConvexhull, flir_icp_calib::MultiCameras Cameras
+// );
 
 // Public function
 data::AABB CalcAABBfrom2DBBs(

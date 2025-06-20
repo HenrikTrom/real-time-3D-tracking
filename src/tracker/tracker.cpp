@@ -181,8 +181,10 @@ void TrackingInterfaceModule::ThreadCameraOffline()
 {
     data::aabb_in PreprocessAABB;
     const std::string video_dir = std::string(CONFIG_DIR) + "/../test/inputs/videos/";
-    const std::string extension = ".mp4";
-    std::array<std::string, flirmulticamera::GLOBAL_CONST_NCAMS> fnames = cpp_utils::get_filenames<flirmulticamera::GLOBAL_CONST_NCAMS>(video_dir, extension);
+    std::array<std::string, flirmulticamera::GLOBAL_CONST_NCAMS> fnames;
+    for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
+        fnames.at(cidx) = std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx));
+    }
 
     cpp_utils::SyncVideoIterator iterator(video_dir, fnames);
 
@@ -232,7 +234,6 @@ void TrackingInterfaceModule::ThreadCameraOnline()
     #endif
 
     std::array<flirmulticamera::Frame, flirmulticamera::GLOBAL_CONST_NCAMS> frame;
-    std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> imgs;
     this->last = std::chrono::steady_clock::now();
     while(!this->ShouldClose){
         if(fcamerahandler.Get(frame))
@@ -290,7 +291,7 @@ bool init_trackingInterfaceModule(
     }
     else
     {
-        cam_settings.fps = 30;
+        cam_settings.fps = 50;
         cam_settings.width = 1024;
         cam_settings.height = 768;
     }

@@ -8,12 +8,10 @@
 
   <license> CC0 1.0 Universal </license>
 
-
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <depend>visualization_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>camera</depend>
   <depend>ros_node_interface</depend>
   <depend>flir_icp_calib</depend>
   <build_export_depend>roscpp</build_export_depend>

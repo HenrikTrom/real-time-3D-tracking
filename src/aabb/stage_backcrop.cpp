@@ -94,18 +94,18 @@ bool BackCrop::ProcessFunction(
             this->ymin = std::clamp(this->normalized.row(1).minCoeff(), 0.f, this->height);
             this->ymax = std::clamp(this->normalized.row(1).maxCoeff(), 0.f, this->height);
             
-            if (aabb.ClassID == 0 || aabb.ClassID == 1 || aabb.ClassID == 2){
+            // if (aabb.ClassID == 0 || aabb.ClassID == 1 || aabb.ClassID == 2){
                 xvals.at(cidx).push_back((int) xmin);
                 xvals.at(cidx).push_back((int) xmax);
                 yvals.at(cidx).push_back((int) ymin);
                 yvals.at(cidx).push_back((int) ymax);
-            }
-            else if (aabb.ClassID == 3 && xvals.at(cidx).size() < 6){
-                xvals.at(cidx).push_back((int) xmin);
-                xvals.at(cidx).push_back((int) xmax);
-                yvals.at(cidx).push_back((int) ymin);
-                yvals.at(cidx).push_back((int) ymax);
-            }
+            // }
+            // else if (aabb.ClassID == 3 && xvals.at(cidx).size() < 6){
+            //     xvals.at(cidx).push_back((int) xmin);
+            //     xvals.at(cidx).push_back((int) xmax);
+            //     yvals.at(cidx).push_back((int) ymin);
+            //     yvals.at(cidx).push_back((int) ymax);
+            // }
         }
     }
 

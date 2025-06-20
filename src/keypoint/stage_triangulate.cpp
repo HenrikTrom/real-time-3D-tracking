@@ -12,7 +12,7 @@ KeyPoint3D calc3Dpoint_worker(
 ){
     std::vector<uint8_t> cids{};
     std::vector<cv::Point2f> pts2D_processed{};
-    for (uint8_t i = 0; i < pts2D.size(); i++)
+    for (uint8_t i = 1; i < pts2D.size(); i++)
     {
         if (pts2D[i].x != 0 && pts2D[i].y != 0)
         {

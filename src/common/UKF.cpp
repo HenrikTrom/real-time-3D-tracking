@@ -65,9 +65,9 @@ VectorXf UKF::model_function(VectorXf input, float dt)
     // implementation of the model tracking [x,y,z,x_dot,y_dot,z_dot,x_dot_dot_dot,y_dot_dot,z_dot_dot]T
     VectorXf output{ this->n };
     
-    output(0) = input(0) + input(3) * dt + 0.5 * input(6) * dt * dt;
-    output(1) = input(1) + input(4) * dt + 0.5 * input(7) * dt * dt;
-    output(2) = input(2) + input(5) * dt + 0.5 * input(8) * dt * dt;
+    output(0) = input(0) + input(3) * dt + 0.5 * input(6) * dt * dt; // x = x0 + vx*t+0.5*ax*t**2
+    output(1) = input(1) + input(4) * dt + 0.5 * input(7) * dt * dt; // y = y0 + vy*t+0.5*ay*t**2
+    output(2) = input(2) + input(5) * dt + 0.5 * input(8) * dt * dt; // z = z0 + vz*t+0.5*az*t**2
     output(3) = input(3) + input(6) * dt;
     output(4) = input(4) + input(7) * dt;
     output(5) = input(5) + input(8) * dt;
@@ -172,13 +172,13 @@ void UKF::update(VectorXf Measurement, int16_t seenby)
 
     UKF::CalculateMeanCovariance(Zsig, Zmean, S, this->w);
         //add measurement noise covariance matrix
-    S = S + R * (static_cast<float>(seenby)/this->max_cams);
+    S = S + R * (static_cast<float>(seenby)/((float) flirmulticamera::GLOBAL_CONST_NCAMS));
 
     // calculate kalman gain
 
-        //create matrix for cross correlation Tc
+    //create matrix for cross correlation Tc
     MatrixXf Tc = MatrixXf(this->n, n_z);
-        //calculate cross correlation matrix
+    //calculate cross correlation matrix
     Tc.fill(0.0);
     for (uint8_t i = 0; i < this->m; i++)
     {
@@ -196,7 +196,6 @@ void UKF::update(VectorXf Measurement, int16_t seenby)
     // update state mean and covariance matrix
     this->state = this->state + K * z_diff;
     this->cov = this->cov - K * S * K.transpose();
-
 }
 
 

@@ -6,8 +6,8 @@
     "input_height": 768,
     "input_width": 1024,
     "precision": "FP16",
-    "probabilityThreshold": 0.25,
-    "nmsThreshold": 0.6,
+    "probabilityThreshold": 0.6,
+    "nmsThreshold": 0.2,
     "topK": 100,
     "calibrationBatchSize": 128,
     "class_names": [

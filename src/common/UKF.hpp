@@ -6,6 +6,8 @@
 #include <iostream>
 #include <vector>
 
+#include "flirmulticamera/hardware_constants.h"
+
 namespace rt3d_tracking{
 
 class UKF
@@ -36,8 +38,6 @@ private:
     float Px;                           // measurement noise
     float Py;
     float Pz;
-
-    const float max_cams = 5.;
 
     // params of the unscented transform
     uint8_t n, m;                       // m = n + 1, there would be m sigma points

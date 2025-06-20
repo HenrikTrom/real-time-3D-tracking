@@ -15,11 +15,11 @@ namespace rt3d_tracking{
 
 namespace modules{
 
-// constexpr std::size_t feat_w = 576;
-// constexpr std::size_t feat_h = 768;
+constexpr std::size_t feat_w = 576;
+constexpr std::size_t feat_h = 768;
 
-constexpr std::size_t feat_w = 384;
-constexpr std::size_t feat_h = 512;
+// constexpr std::size_t feat_w = 384;
+// constexpr std::size_t feat_h = 512;
 
 class TrackingInterfaceModule : public ros_node_interface::BaseRosInterfaceModule
 {
