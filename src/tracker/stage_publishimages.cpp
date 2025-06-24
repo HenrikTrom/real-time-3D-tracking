@@ -10,13 +10,16 @@ PublishImages::PublishImages(
 ){
     this->init(nh, topic_name, queue_size);
     this->compression_params = {cv::IMWRITE_JPEG_QUALITY, compression_quality};
-    this->msg_imgs_compressed.images = std::vector<sensor_msgs::CompressedImage>{
+    this->msg.images = std::vector<sensor_msgs::CompressedImage>{
         flirmulticamera::GLOBAL_CONST_NCAMS};
     for (std::size_t camid = 0; camid<flirmulticamera::GLOBAL_CONST_NCAMS; camid++){
-        this->msg_imgs_compressed.images.at(camid).format = "jpeg";
-        this->msg_imgs_compressed.images.at(camid).header.frame_id = "cam"+std::to_string(camid);
+        this->msg.images.at(camid).format = "jpeg";
+        this->msg.images.at(camid).header.frame_id = std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(camid));
     }
     spdlog::info("VIDEO LOGGING ROS @ {}", topic_name);
+    for (int i = 0; i<5; i++){
+        this->imgs_pubs.at(i) = this->nh.advertise<sensor_msgs::CompressedImage>("cam"+std::to_string(i), 2);
+    }
     this->ThreadHandle.reset(new std::thread(&PublishImages::ThreadfunctionPublish, this));
 }
 
@@ -27,26 +30,34 @@ void PublishImages::ThreadfunctionPublish(void){
     while (!this->ShouldClose)
     {
         {
-            std::lock_guard<std::mutex> lck(this->mtx);
-            if (!this->InFIFO.empty())
+            std::lock_guard<std::mutex> lck(this->mtx); // this took so much time???
+            if (this->GetInFIFOSize() != 0)
             {
-                this->last = std::chrono::steady_clock::now();
-                data::publishimages_in &input = this->InFIFO.front();
-                for (std::size_t j = 0; j<flirmulticamera::GLOBAL_CONST_NCAMS; j++){
-                    cv::imencode(".jpg", input.images.at(j), 
-                        this->msg_imgs_compressed.images.at(j).data, 
-                        this->compression_params
-                    );
+                {
+                    this->last = std::chrono::steady_clock::now();
+                    data::publishimages_in &input = this->InFIFO.front();
+                    for (std::size_t j = 0; j<flirmulticamera::GLOBAL_CONST_NCAMS; j++)
+                    {
+                        cv::imencode(".jpg", input.images.at(j), 
+                            this->msg.images.at(j).data, 
+                            this->compression_params
+                        );
+                    }
+                    this->InFIFO.pop();
                 }
-                this->pub.publish(this->msg_imgs_compressed);
+                
+                // this->imgs_pubs.at(0).publish(this->msg.images.at(0));
+                auto last_ = std::chrono::steady_clock::now();
+                this->pub.publish(this->msg);
+                auto now_ = std::chrono::steady_clock::now();
+                auto duration_ = std::chrono::duration_cast<std::chrono::nanoseconds>(now_ - last_);
+                std::cout<<"PubImgsCompressed: "<< (double) duration_.count()<<std::endl;
                 this->now = std::chrono::steady_clock::now();
-                this->duration = std::chrono::duration_cast<std::chrono::milliseconds>(this->now - this->last);
+                this->duration = std::chrono::duration_cast<std::chrono::seconds>(this->now - this->last);
                 this->total_t += (double) this->duration.count();
                 this->steps += 1.;
-                this->InFIFO.pop();
             }
         }
-        this->pub.publish(this->msg);
         std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
     std::this_thread::sleep_for(std::chrono::microseconds(10));

@@ -1,3 +1,3 @@
-sleep 10
+# sleep 10
 
 /opt/modules/flirmulticamera/build/record_synchronized_frame ../cfg/CamSettings1024x768.json 

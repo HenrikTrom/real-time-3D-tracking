@@ -3,6 +3,6 @@
     "cfg_camera_calibration": "/home/docker/workspace/workspace/src/real-time-3D-tracking/cfg/Calibration1024x768.json",
     "cfg_det": "/home/docker/workspace/workspace/src/real-time-3D-tracking/cfg/yolo_default_config.json",
     "cfg_pose": "/home/docker/workspace/workspace/src/real-time-3D-tracking/cfg/pose133_l_config.json",
-    "online_mode": false,
+    "online_mode": true,
     "compression_quality": 50
 }

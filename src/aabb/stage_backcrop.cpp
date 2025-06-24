@@ -76,6 +76,7 @@ bool BackCrop::ProcessFunction(
         this->t1 = std::chrono::steady_clock::now();
     #endif
     std::array<std::vector<int>, 5> xvals, yvals;
+    std::array<std::vector<int>, 5> xvals_rh, yvals_rh;
     for (auto & aabb: backcrop_in.aabbs)
     {
         for (int i = 0; i < this->n_vertices; ++i) {
@@ -94,25 +95,56 @@ bool BackCrop::ProcessFunction(
             this->ymin = std::clamp(this->normalized.row(1).minCoeff(), 0.f, this->height);
             this->ymax = std::clamp(this->normalized.row(1).maxCoeff(), 0.f, this->height);
             
-            // if (aabb.ClassID == 0 || aabb.ClassID == 1 || aabb.ClassID == 2){
+            #ifdef TRACK_COLOR
+            if (aabb.ClassID == 1){
+                // xvals_rh.at(cidx).push_back((int) xmin);
+                // xvals_rh.at(cidx).push_back((int) xmax);
+                // yvals_rh.at(cidx).push_back((int) ymin);
+                // yvals_rh.at(cidx).push_back((int) ymax);
+                xvals_rh.at(cidx).push_back((int) std::clamp(this->xmin-50, 0.f, this->width));
+                xvals_rh.at(cidx).push_back((int) std::clamp(this->xmax+50, 0.f, this->width));
+                yvals_rh.at(cidx).push_back((int) std::clamp(this->ymin-50, 0.f, this->height));
+                yvals_rh.at(cidx).push_back((int) std::clamp(this->ymax+50, 0.f, this->height));
+
+
+
+            }
+            #endif
+            #ifdef TRACK_KPS133
                 xvals.at(cidx).push_back((int) xmin);
                 xvals.at(cidx).push_back((int) xmax);
                 yvals.at(cidx).push_back((int) ymin);
                 yvals.at(cidx).push_back((int) ymax);
-            // }
-            // else if (aabb.ClassID == 3 && xvals.at(cidx).size() < 6){
-            //     xvals.at(cidx).push_back((int) xmin);
-            //     xvals.at(cidx).push_back((int) xmax);
-            //     yvals.at(cidx).push_back((int) ymin);
-            //     yvals.at(cidx).push_back((int) ymax);
-            // }
+            #endif
         }
     }
-
-    if (xvals.at(0).size() == 0)
+    
+    if (xvals.at(0).size() == 0 && xvals_rh.at(0).size() == 0)
     {
         return false;
     }
+    #ifdef TRACK_COLOR
+        for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
+            cv::Rect bbox2d_rh;
+            bbox2d_rh.x = *std::min_element(xvals_rh.at(cidx).begin(), xvals_rh.at(cidx).end());
+            bbox2d_rh.y = *std::min_element(yvals_rh.at(cidx).begin(), yvals_rh.at(cidx).end());
+            bbox2d_rh.width = *std::max_element(xvals_rh.at(cidx).begin(), xvals_rh.at(cidx).end())-bbox2d_rh.x;
+            bbox2d_rh.height = *std::max_element(yvals_rh.at(cidx).begin(), yvals_rh.at(cidx).end())-bbox2d_rh.y;
+            if (bbox2d_rh.width < 10 && bbox2d_rh.height < 10) // filter out to small proposals
+            {
+                bbox2d_rh.x = 0;
+                bbox2d_rh.y = 0;
+                bbox2d_rh.width = 10;
+                bbox2d_rh.height = 10;
+            }
+
+            backcrop_out.rhand.back_crops.at(cidx) = backcrop_in.frame.at(cidx)(bbox2d_rh).clone();
+            backcrop_out.rhand.bboxes.at(cidx) = bbox2d_rh;
+            backcrop_out.rhand.timestamp = backcrop_in.timestamp;
+        }
+    #endif
+
+    #ifdef TRACK_KPS133
 
     for (std::size_t cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
         cv::Rect bbox2d;
@@ -132,6 +164,7 @@ bool BackCrop::ProcessFunction(
         backcrop_out.body.bboxes.at(cidx) = bbox2d;
         backcrop_out.body.timestamp = backcrop_in.timestamp;
     }
+    #endif
 
     #if defined(USE_DEBUG_TIME_LOGGING)
         this->t2 = std::chrono::steady_clock::now();

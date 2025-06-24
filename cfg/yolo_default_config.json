@@ -6,7 +6,7 @@
     "input_height": 768,
     "input_width": 1024,
     "precision": "FP16",
-    "probabilityThreshold": 0.6,
+    "probabilityThreshold": 0.3,
     "nmsThreshold": 0.2,
     "topK": 100,
     "calibrationBatchSize": 128,

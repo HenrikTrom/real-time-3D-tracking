@@ -2,18 +2,8 @@
 
 TODO:
 
-- Adjust cameras 2 front up, 2 sideways () top->front
-- include top camera in triangulation??
-- Add latency checks
-
-- cv resize error 
-
-Online Test
-- benchmark
-- video
-- 133
-- color
-- better cameras (fix aabbs?)
+-Color-> yolo confidence 0.3 fps 60
+- keypoint -> confidence 60, fps, 50
 - Video Logging
 
 - Fix clock in cameras and pass timestamps

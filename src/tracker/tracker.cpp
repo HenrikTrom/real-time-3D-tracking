@@ -15,7 +15,8 @@ TrackingInterfaceModule::TrackingInterfaceModule(
     this->type = "TrackingInterfaceModule";
 };
 
-bool TrackingInterfaceModule::start(){
+bool TrackingInterfaceModule::start()
+{
     spdlog::info("----------------------------------------");
     spdlog::info("---------------- Tracker ---------------");
     spdlog::info("----------------------------------------");
@@ -254,10 +255,14 @@ void TrackingInterfaceModule::ThreadCameraOnline()
                 this->module_aabb->InPost(PreprocessAABB);
                 this->seq++;
                 #ifdef VIDEO_LOGGING
+                    auto last_ = std::chrono::steady_clock::now();
                     data::publishimages_in pub_data;
                     pub_data.timestamp = frame.at(0).Timestamp;
                     pub_data.images = this->cpuImgs;
                     this->stage_publishimages->Post(pub_data);
+                    auto now_ = std::chrono::steady_clock::now();
+                    auto duration_ = std::chrono::duration_cast<std::chrono::milliseconds>(now_ - last_);
+                    std::cout<<"PubImgsInFifo: "<< (double) duration_.count()<<std::endl;
                 #endif
             }
             this->now = std::chrono::steady_clock::now();
