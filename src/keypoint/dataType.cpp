@@ -29,19 +29,7 @@ KeyPoint3D_Augment::KeyPoint3D_Augment(void)
 
     this->ukf.reset(new UKF{6});
     this->ukf->state << this->coord, 0, 0, 0;
-    // this->FIR.reset(new FIR_filter{FIR_b});
-    this->NotSeenFor = 0;
-    this->SeenFor = 1;
-}
-
-KeyPoint3D_Augment::KeyPoint3D_Augment(KeyPoint3D point3D, std::vector<float> FIR_b)
-{
-    this->id = point3D.id;
-    this->coord = point3D.coord;
-
-    this->ukf.reset(new UKF{6});
-    this->ukf->state << this->coord, 0, 0, 0;
-    // this->FIR.reset(new FIR_filter{FIR_b});
+    this->maf.reset(new MAF{5});
     this->NotSeenFor = 0;
     this->SeenFor = 1;
 }
@@ -60,10 +48,19 @@ void KeyPoint3D_Augment::Predict(float dt)
 
 void KeyPoint3D_Augment::Update(KeyPoint3D &pointIn)
 {
-    this->ukf->update(pointIn.coord, pointIn.SeenBy);
-    this->coord << this->ukf->state(0), this->ukf->state(1), this->ukf->state(2);
-    this->NotSeenFor = 0;
-    this->SeenFor ++;
+    
+    if (pointIn.coord.norm() != 0.0)
+    {
+        this->maf->update(pointIn.coord, this->coord, this->conf_maf);
+    }
+    else
+    {
+        this->maf->update(this->coord, this->conf_maf);
+    }
+    // this->ukf->update(pointIn.coord, pointIn.SeenBy);
+    // this->coord << this->ukf->state(0), this->ukf->state(1), this->ukf->state(2);
+    // this->NotSeenFor = 0;
+    
 }
 
 

@@ -4,6 +4,7 @@
 #include "Eigen/Dense"
 
 #include "common/UKF.hpp"
+#include "common/MAF.hpp"
 
 namespace rt3d_tracking
 {
@@ -38,17 +39,17 @@ class KeyPoint3D_Augment : public KeyPoint3D
 private:
     // std::shared_ptr<FIR_filter> FIR;
 public:
+    std::shared_ptr<MAF> maf;
     std::shared_ptr<UKF> ukf;
     uint16_t NotSeenFor;
     uint64_t SeenFor;
+    float conf_maf;
     
     KeyPoint3D_Augment(void);
-    KeyPoint3D_Augment(KeyPoint3D point3D, std::vector<float> FIR_b = std::vector<float>{});
     ~KeyPoint3D_Augment();
 
     void Predict(float dt);
     void Update(KeyPoint3D &pointIn);
-    // std::vector<Eigen::VectorXf> Filter(void);
 };
 
 } //namespace rt3d_tracking

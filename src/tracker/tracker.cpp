@@ -28,6 +28,16 @@ bool TrackingInterfaceModule::start()
     while(!this->module_aabb->IsReady()){
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+
+    #ifdef VIDEO_LOGGING
+        this->compression_params = {cv::IMWRITE_JPEG_QUALITY, 50};
+        for (std::size_t i = 0; i<flirmulticamera::GLOBAL_CONST_NCAMS; i++)
+        {
+            this->pubs.at(i) = this->nh.advertise<sensor_msgs::CompressedImage>(
+                std::string(TOPIC_IMAGES_COMPRESSED)+"/"+std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(i))+"/compressed", 1
+            );
+        }
+    #endif
     // KPS_FULL_133
     #ifdef TRACK_KPS133
         this->module_kps_full.reset(
@@ -95,9 +105,9 @@ void TrackingInterfaceModule::Terminate()
     #ifdef TRACK_COLOR
         this->module_color->Terminate();
     #endif
-    #ifdef VIDEO_LOGGING
-        this->stage_publishimages->Terminate();
-    #endif
+    // #ifdef VIDEO_LOGGING
+    //     this->stage_publishimages->Terminate();
+    // #endif
     if (!this->steps == 0.){
     spdlog::info(
         "Average Camera Cycle: {} milliseconds over {} samples, should be {} ms", 
@@ -228,11 +238,11 @@ void TrackingInterfaceModule::ThreadCameraOnline()
     };
     fcamerahandler.Start();
 
-    #ifdef VIDEO_LOGGING
-        this->stage_publishimages.reset(new stages::PublishImages{this->nh, "images_compressed", 60, 60});
-    #else 
-        spdlog::info("VIDEO LOGGING ROS: OFF");
-    #endif
+    // #ifdef VIDEO_LOGGING
+    //     this->stage_publishimages.reset(new stages::PublishImages{this->nh, "images_compressed", 60, 60});
+    // #else 
+    //     spdlog::info("VIDEO LOGGING ROS: OFF");
+    // #endif
 
     std::array<flirmulticamera::Frame, flirmulticamera::GLOBAL_CONST_NCAMS> frame;
     this->last = std::chrono::steady_clock::now();
@@ -248,21 +258,28 @@ void TrackingInterfaceModule::ThreadCameraOnline()
                         frame.at(i).frameData->GetWidth(), CV_8UC3, 
                         frame.at(i).frameData->GetData()
                     );
-                cv::cvtColor(cpuImgs.at(i), cpuImgs.at(i), cv::COLOR_RGB2BGR);
+                    cv::cvtColor(cpuImgs.at(i), cpuImgs.at(i), cv::COLOR_RGB2BGR);
                     PreprocessAABB.frame.at(i).upload(this->cpuImgs.at(i));
                 }
                 
                 this->module_aabb->InPost(PreprocessAABB);
                 this->seq++;
                 #ifdef VIDEO_LOGGING
-                    auto last_ = std::chrono::steady_clock::now();
-                    data::publishimages_in pub_data;
-                    pub_data.timestamp = frame.at(0).Timestamp;
-                    pub_data.images = this->cpuImgs;
-                    this->stage_publishimages->Post(pub_data);
-                    auto now_ = std::chrono::steady_clock::now();
-                    auto duration_ = std::chrono::duration_cast<std::chrono::milliseconds>(now_ - last_);
-                    std::cout<<"PubImgsInFifo: "<< (double) duration_.count()<<std::endl;
+                    for (std::size_t i = 0; i<flirmulticamera::GLOBAL_CONST_NCAMS; i++){
+                        cv::imencode(".jpg", this->cpuImgs.at(i), 
+                            this->msg_imgs_c.data, 
+                            this->compression_params
+                        );
+                        this->pubs.at(i).publish(this->msg_imgs_c);
+                    }
+                    // auto last_ = std::chrono::steady_clock::now();
+                    // data::publishimages_in pub_data;
+                    // pub_data.timestamp = frame.at(0).Timestamp;
+                    // pub_data.images = this->cpuImgs;
+                    // this->stage_publishimages->Post(pub_data);
+                    // auto now_ = std::chrono::steady_clock::now();
+                    // auto duration_ = std::chrono::duration_cast<std::chrono::milliseconds>(now_ - last_);
+                    // std::cout<<"PubImgsInFifo: "<< (double) duration_.count()<<std::endl;
                 #endif
             }
             this->now = std::chrono::steady_clock::now();

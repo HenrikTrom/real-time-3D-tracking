@@ -83,7 +83,6 @@ bool BackCrop::ProcessFunction(
             this->pointMatrix.col(i).head<3>() = aabb.Vertices[i].head<3>();
             this->pointMatrix(3, i) = 1.0f;
         }
-
         for (std::size_t cidx = 0;cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
             this->projected = this->cameras.Cam.at(cidx).P * this->pointMatrix;
             

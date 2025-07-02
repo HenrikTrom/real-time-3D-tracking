@@ -51,7 +51,7 @@ public:
     uint32_t seq = 0;
 
     // modules
-    std::unique_ptr<stages::PublishImages> stage_publishimages;
+    // std::unique_ptr<stages::PublishImages> stage_publishimages;
     std::unique_ptr<modules::AABB> module_aabb;
     #ifdef TRACK_KPS133
         std::unique_ptr<modules::KPS<133, feat_w, feat_h>> module_kps_full;
@@ -64,6 +64,12 @@ public:
     std::chrono::milliseconds duration;
     double total_t = 0.;
     double steps = 0.;
+
+    #ifdef VIDEO_LOGGING
+        std::array<ros::Publisher, 5> pubs;
+        std::vector<int> compression_params;
+        sensor_msgs::CompressedImage msg_imgs_c;
+    #endif
 };
 
 bool init_trackingInterfaceModule(
