@@ -116,4 +116,4 @@ target_compile_definitions(interface_133 PUBLIC TRACK_KPS133=1)
 # target_compile_definitions(interface_133 PUBLIC VIDEO_LOGGING=1)
 
 target_compile_definitions(interface_color PUBLIC TRACK_COLOR=1)
-# target_compile_definitions(interface_color PUBLIC VIDEO_LOGGING=1)
+target_compile_definitions(interface_color PUBLIC VIDEO_LOGGING=1)

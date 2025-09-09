@@ -91,7 +91,7 @@ void KPS_COLOR::ThreadColorFilter(){
                             cv::Scalar(0, 0, 255)
                         );
                         std::string fname = std::string(CONFIG_DIR)+"/../test/result/images/" + 
-                            std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))+"_color.jpg";
+                            this->cameras.Cam.at(cidx).SN+"_color.jpg";
                         spdlog::info("Saved {}", fname);
                         cv::imwrite(fname, this->DebugImgs.at(cidx));
                     }

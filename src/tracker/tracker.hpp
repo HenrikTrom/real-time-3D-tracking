@@ -10,6 +10,7 @@
 #include "keypoint/module_kpts.hpp"
 #include "keypoint/module_color.hpp"
 #include "tracker/stage_publishimages.hpp"
+#include <flirmulticamera/videoIO.h>
 
 namespace rt3d_tracking{
 
@@ -34,7 +35,7 @@ public:
     bool start();
     void run();
     const config_tracking cfg;
-    const flirmulticamera::CameraSettings cam_settings;
+    const flirmulticamera::CameraSettings cam_settings; 
     const flir_icp_calib::MultiCameras cameras;
     bool ShouldClose = false;
 
@@ -43,6 +44,7 @@ public:
     void ThreadCameraOffline();
     void ThreadCameraOnline();
     std::unique_ptr<std::thread> ThreadHandleCamera;
+    std::unique_ptr<flirmulticamera::VideoWriter> writer;
 
     std::unique_ptr<std::thread> ThreadHandleAABB_KPS;
     void ThreadAABB_KPS();
@@ -64,12 +66,6 @@ public:
     std::chrono::milliseconds duration;
     double total_t = 0.;
     double steps = 0.;
-
-    #ifdef VIDEO_LOGGING
-        std::array<ros::Publisher, 5> pubs;
-        std::vector<int> compression_params;
-        sensor_msgs::CompressedImage msg_imgs_c;
-    #endif
 };
 
 bool init_trackingInterfaceModule(

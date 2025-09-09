@@ -5,7 +5,7 @@
 #include "pose_inference/stages.hpp"
 #include "flir_icp_calib/camera_config.hpp"
 #include "flir_icp_calib/methods.hpp"
-#include "flirmulticamera/hardware_constants.h"
+#include "flirmulticamera/config.h"
 #include "common/triangulate.hpp"
 #include "config.h"
 #include <future>

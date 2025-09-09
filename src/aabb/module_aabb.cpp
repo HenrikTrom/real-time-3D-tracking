@@ -129,7 +129,7 @@ void AABB::ThreadAABBBackCrop(){
                             this->cameras.Cam.at(cidx).K
                         );
                         std::string fname = std::string(CONFIG_DIR)+"/../test/result/images/" + 
-                            std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))+"_aabbs.jpg";
+                            this->cameras.Cam.at(cidx).SN+"_aabbs.jpg";
                         spdlog::info("Saved {}", fname);
                         cv::imwrite(fname, DebugImgs.at(cidx));
                     }

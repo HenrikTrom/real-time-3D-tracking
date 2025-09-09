@@ -173,7 +173,7 @@ private:
                             );
                         }
                         std::string fname = std::string(CONFIG_DIR)+"/../test/result/images/" + 
-                            std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))+"_kpts.jpg";
+                            this->cameras.Cam.at(cidx).SN+"_kpts.jpg";
                         spdlog::info("Saved {}", fname);
                         cv::imwrite(fname, this->DebugImgs.at(cidx));
                     }
@@ -201,7 +201,7 @@ private:
                     stages::DrawKPTs<NKPS>(keypoints3D, this->cameras, this->DebugImgs);
                     for (std::size_t cidx = 0; cidx< flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
                         std::string fname = std::string(CONFIG_DIR)+"/../test/result/images/" + 
-                            std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(cidx))+"_kpts3d.jpg";
+                            this->cameras.Cam.at(cidx).SN+"_kpts3d.jpg";
                         spdlog::info("Saved {}", fname);
                         cv::imwrite(fname, this->DebugImgs.at(cidx));
                     }

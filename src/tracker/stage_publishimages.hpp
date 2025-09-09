@@ -6,7 +6,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <spdlog/spdlog.h>
-#include "flirmulticamera/hardware_constants.h"
+#include "flirmulticamera/config.h"
 
 namespace rt3d_tracking{
 
@@ -26,7 +26,7 @@ class PublishImages : public stages::StagePublish<
     keiko_msgs::ImgsListCompressed>
 {
 public:
-    PublishImages(ros::NodeHandle &nh, std::string topic_name, int queue_size, int compression_quality);
+    PublishImages(ros::NodeHandle &nh, std::string topic_name, int queue_size, int compression_quality, std::vector<std::string> &sns);
     ~PublishImages();
 private:
     void ThreadfunctionPublish();
@@ -37,7 +37,6 @@ private:
     double total_t{0};
     double steps = 0.;
     std::array<ros::Publisher, 5> imgs_pubs;
-
 };
 
 

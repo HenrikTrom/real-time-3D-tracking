@@ -6,7 +6,7 @@ namespace rt3d_tracking
 namespace stages{
 
 PublishImages::PublishImages(
-    ros::NodeHandle &nh, std::string topic_name, int queue_size, int compression_quality
+    ros::NodeHandle &nh, std::string topic_name, int queue_size, int compression_quality, std::vector<std::string> &sns
 ){
     this->init(nh, topic_name, queue_size);
     this->compression_params = {cv::IMWRITE_JPEG_QUALITY, compression_quality};
@@ -14,7 +14,7 @@ PublishImages::PublishImages(
         flirmulticamera::GLOBAL_CONST_NCAMS};
     for (std::size_t camid = 0; camid<flirmulticamera::GLOBAL_CONST_NCAMS; camid++){
         this->msg.images.at(camid).format = "jpeg";
-        this->msg.images.at(camid).header.frame_id = std::string(flirmulticamera::GLOBAL_CONST_CAMERA_SERIAL_NUMBERS.at(camid));
+        this->msg.images.at(camid).header.frame_id = sns.at(camid);
     }
     spdlog::info("VIDEO LOGGING ROS @ {}", topic_name);
     for (int i = 0; i<5; i++){

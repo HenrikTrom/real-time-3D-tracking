@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-#include "flirmulticamera/hardware_constants.h"
+#include "flirmulticamera/config.h"
 
 namespace rt3d_tracking{
 
