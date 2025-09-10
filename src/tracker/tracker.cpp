@@ -247,7 +247,7 @@ void TrackingInterfaceModule::ThreadCameraOnline()
         static_cast<uint32_t>(cam_settings.height), 
         static_cast<float>(cam_settings.fps),
         static_cast<std::string>(cam_settings.codec),
-        static_cast<std::string>(cam_settings.pixel_format)
+        static_cast<std::string>("BGR8") // use BGR8 because the tracker expects it, avoid double conversion
     });
     std::vector<std::string> video_filenames{flirmulticamera::GLOBAL_CONST_NCAMS};   
     for (int cidx = 0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++)
