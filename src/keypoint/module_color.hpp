@@ -45,7 +45,7 @@ namespace modules{
         double total_t{0};
         double steps{0};
         long long total_lat{0};
-        timespec ts;
+        timespec ts_now;
 
         //stage-base-stuff
         bool ShouldClose = false;
@@ -55,7 +55,8 @@ namespace modules{
         public:
         KPS_COLOR(
             ros::NodeHandle &nh, const std::string &topic_name, 
-            const flir_icp_calib::MultiCameras &cameras, const double &fps
+            const flir_icp_calib::MultiCameras &cameras, const double &fps,
+            const std::size_t &window_size
         );
         ~KPS_COLOR(){};
         void Terminate(void);

@@ -37,6 +37,7 @@ bool TrackingInterfaceModule::start()
                 this->cfg.cfg_pose,
                 this->cameras,
                 this->cam_settings.fps,
+                this->cfg.maf_window_size,
                 std::string(BOPDYPOSE133)
             )
         );
@@ -47,7 +48,7 @@ bool TrackingInterfaceModule::start()
     // KPS_COLOR
     #ifdef TRACK_COLOR
         this->module_color.reset(
-            new modules::KPS_COLOR(this->nh, std::string(COLOR_MARKER), this->cameras, this->cam_settings.fps)
+            new modules::KPS_COLOR(this->nh, std::string(COLOR_MARKER), this->cameras, this->cam_settings.fps, this->cfg.maf_window_size)
         );
         while(!this->module_color->IsReady()){
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -157,8 +158,7 @@ void TrackingInterfaceModule::ThreadCameraSingleImg()
 
     cpp_utils::ProgressBar progressBar(MAX_INFERENCE_ITER);
     progressBar.update(0);
-    for (std::size_t i = 1; i<=MAX_INFERENCE_ITER; i++)
-    {
+    for (std::size_t i = 1; i<=MAX_INFERENCE_ITER; i++) {
         if (this->module_aabb->GetInFIFOSize() < cpp_utils::MAXINFIFOSIZE)
         {
             std::array<cv::cuda::GpuMat, flirmulticamera::GLOBAL_CONST_NCAMS> tmp = PreProcessIn;
@@ -263,9 +263,15 @@ void TrackingInterfaceModule::ThreadCameraOnline()
     while(!this->ShouldClose){
         if(fcamerahandler.Get(frame))
         {
-            if (this->module_aabb->GetInFIFOSize() < 5){
+            if (this->module_aabb->GetInFIFOSize() < 5) {
+                // #ifdef TRACK_COLOR
+                //     data::kps_in color_in;
+                //     clock_gettime(CLOCK_MONOTONIC, &color_in.timestamp);
+                // #endif
+
                 data::aabb_in PreprocessAABB;
                 clock_gettime(CLOCK_MONOTONIC, &PreprocessAABB.timestamp);
+
                 for (std::size_t i = 0; i<flirmulticamera::GLOBAL_CONST_NCAMS; i++){
                     this->cpuImgs.at(i) = cv::Mat(
                         frame.at(i).frameData->GetHeight(), 
@@ -274,8 +280,15 @@ void TrackingInterfaceModule::ThreadCameraOnline()
                     );
                     cv::cvtColor(cpuImgs.at(i), cpuImgs.at(i), cv::COLOR_RGB2BGR);
                     PreprocessAABB.frame.at(i).upload(this->cpuImgs.at(i));
+                    // #ifdef TRACK_COLOR
+                    //     color_in.back_crops.at(i).upload(this->cpuImgs.at(i));
+                    //     color_in.bboxes.at(i) = cv::Rect(0, 0, this->cam_settings.width, this->cam_settings.height);
+                    // #endif
                 }
-                
+                // #ifdef TRACK_COLOR
+                //     this->module_color->InPost(color_in);
+                // #endif
+
                 this->module_aabb->InPost(PreprocessAABB);
                 this->seq++;
             }

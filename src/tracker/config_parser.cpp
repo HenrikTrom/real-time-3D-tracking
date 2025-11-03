@@ -15,7 +15,8 @@ bool load_tracking_config(config_tracking &cfg_pipeline){
     cfg_pipeline.cfg_det = doc["cfg_det"].GetString();
     cfg_pipeline.cfg_pose = doc["cfg_pose"].GetString();
     cfg_pipeline.online_mode = doc["online_mode"].GetBool();
-    cfg_pipeline.compression_quality = doc["compression_quality"].GetInt();
+    cfg_pipeline.maf_window_size = doc["maf_window_size"].GetUint64();
+    cfg_pipeline.filter_conf_threshold = doc["filter_conf_threshold"].GetDouble();
     return true;
 }
 

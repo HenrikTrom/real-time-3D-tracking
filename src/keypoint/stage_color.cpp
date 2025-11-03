@@ -33,12 +33,12 @@ bool Color::ProcessFunction(
     cv::Mat img;
     cv::Mat hsvFrame, mask;
     
-    for (std::size_t idx=0; idx<flirmulticamera::GLOBAL_CONST_NCAMS; idx++){
+    for (std::size_t cidx=0; cidx<flirmulticamera::GLOBAL_CONST_NCAMS; cidx++){
         cv::Point2f pt;
-        input.back_crops.at(idx).download(img);
+        input.back_crops.at(cidx).download(img);
         // back-cropping can be problematic if done at the edges..
         if (img.empty()){
-            pts.at(idx) = pt;
+            pts.at(cidx) = pt;
             continue;
         }
         // Convert to HSV color space
@@ -52,7 +52,7 @@ bool Color::ProcessFunction(
         cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
         
         if (contours.empty()) {
-            pts.at(idx) = pt;
+            pts.at(cidx) = pt;
             continue;
         }
         // Find the largest contour
@@ -65,13 +65,16 @@ bool Color::ProcessFunction(
                 largestIdx = i;
             }
         }
+        if (maxArea < 10){ // filter out noise
+            continue;
+        }
         // Compute the centroid of the largest contour
         cv::Moments m = cv::moments(contours[largestIdx]);
         if (m.m00 != 0) {
-            pt.x = static_cast<float>(m.m10 / m.m00)+input.bboxes.at(idx).x;
-            pt.y = static_cast<float>(m.m01 / m.m00)+input.bboxes.at(idx).y;
+            pt.x = static_cast<float>(m.m10 / m.m00)+input.bboxes.at(cidx).x;
+            pt.y = static_cast<float>(m.m01 / m.m00)+input.bboxes.at(cidx).y;
         } 
-        pts.at(idx) = pt;
+        pts.at(cidx) = pt;
     }
     // triangulate
     output.at(0) = calc3Dpoint_worker(0, pts, this->cameras);

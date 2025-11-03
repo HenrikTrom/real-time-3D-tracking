@@ -8,7 +8,8 @@ namespace modules{
 KPS_COLOR::KPS_COLOR(
     ros::NodeHandle &nh, const std::string &topic_name,
     const flir_icp_calib::MultiCameras &cameras, 
-    const double &fps
+    const double &fps,
+    const std::size_t &window_size
 ) : cameras(cameras), fps(fps) 
 {
     this->nh=nh;
@@ -32,7 +33,7 @@ KPS_COLOR::KPS_COLOR(
     while(!this->color_stage->IsReady()){
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    this->filter_stage.reset(new stages::Filter<1>(this->fps));
+    this->filter_stage.reset(new stages::Filter<1>(this->fps, window_size));
     while(!this->filter_stage->IsReady()){
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -110,8 +111,12 @@ void KPS_COLOR::ThreadFilterPublish(){
         std::array<KeyPoint3D, 1> tracked3d;
         if (this->filter_stage->Get(tracked3d)){
             timespec& ts = this->global_time_q.front();
-            this->msg_kps.header.stamp.sec = ts.tv_sec;
-            this->msg_kps.header.stamp.nsec = ts.tv_nsec;
+            timespec _test;
+            clock_gettime(CLOCK_MONOTONIC, &_test);
+            this->msg_kps.header.stamp.sec = _test.tv_sec;
+            this->msg_kps.header.stamp.nsec = _test.tv_nsec;
+            // this->msg_kps.header.stamp.sec = ts.tv_sec;
+            // this->msg_kps.header.stamp.nsec = ts.tv_nsec;
             this->msg_kps.header.frame_id = std::string(FRAME_TRACKER);
             this->msg_kps.points.clear();
             for (size_t i = 0; i < tracked3d.size(); i++)
@@ -130,15 +135,15 @@ void KPS_COLOR::ThreadFilterPublish(){
             this->steps += 1.;
             this->last = this->now;
 
-            timespec _ts, _diff;
-            clock_gettime(CLOCK_MONOTONIC, &_ts);
-            _diff.tv_sec = _ts.tv_sec - this->ts.tv_sec;
-            _diff.tv_nsec = _ts.tv_nsec - this->ts.tv_nsec;
-            if (_diff.tv_nsec < 0) {
+            timespec _diff;
+            clock_gettime(CLOCK_MONOTONIC, &this->ts_now);
+            _diff.tv_sec = this->ts_now.tv_sec - ts.tv_sec;
+            _diff.tv_nsec = this->ts_now.tv_nsec - ts.tv_nsec;
+            if (_diff.tv_nsec < 0) { // deal with fluctuating clock?
                 _diff.tv_sec -= 1;
                 _diff.tv_nsec += 1000000000;
             }
-
+            
             long long elapsed_ms = _diff.tv_sec * 1000LL + _diff.tv_nsec / 1000000;
             this->total_lat += elapsed_ms;
         }

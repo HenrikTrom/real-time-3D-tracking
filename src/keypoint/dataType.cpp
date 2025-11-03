@@ -22,21 +22,19 @@ KeyPoint3D::KeyPoint3D(uint8_t id, float x, float y, float z, int16_t seenby)
 
 KeyPoint3D::~KeyPoint3D(){}
 
-KeyPoint3D_Augment::KeyPoint3D_Augment(void)
-{
+KeyPoint3D_Augment::KeyPoint3D_Augment(){}
+
+KeyPoint3D_Augment::~KeyPoint3D_Augment(){}
+
+void KeyPoint3D_Augment::init(const std::size_t &window_size){
     this->id = 0;
     this->coord = Eigen::Vector3f{0.0, 0.0, 0.0};
 
     this->ukf.reset(new UKF{6});
     this->ukf->state << this->coord, 0, 0, 0;
-    this->maf.reset(new MAF{5});
+    this->maf.reset(new MAF{window_size});
     this->NotSeenFor = 0;
     this->SeenFor = 1;
-}
-
-KeyPoint3D_Augment::~KeyPoint3D_Augment()
-{
-
 }
 
 void KeyPoint3D_Augment::Predict(float dt)

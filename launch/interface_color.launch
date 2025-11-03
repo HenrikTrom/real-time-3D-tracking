@@ -3,6 +3,7 @@
 
 <arg name="ns" default="flir_ros_interface" />
 <arg name="autostart" default="true" />
+<!-- <arg name="autostart" default="false" /> -->
 <arg name="visualize" default="true" />
 
 <group ns="$(arg ns)">

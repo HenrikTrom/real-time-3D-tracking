@@ -33,19 +33,39 @@ class Triangulate : public cpp_utils::StageBase<
 {
 private:
 uint64_t frameCounter;
+std::array<cv::Mat, flirmulticamera::GLOBAL_CONST_NCAMS> Ks, nKs, dists;
 
 bool ProcessFunction(
     std::array<std::array<std::array<float, 2>, NKPS>, flirmulticamera::GLOBAL_CONST_NCAMS> &keypoints, 
     std::array<KeyPoint3D, NKPS> &outputs
 ){
+    // undistort points
+    std::array<std::vector<cv::Point2f>, flirmulticamera::GLOBAL_CONST_NCAMS> keypoints_cv;
+    std::array<std::vector<cv::Point2f>, flirmulticamera::GLOBAL_CONST_NCAMS> keypoints_cv_undistorted;
+    for(int cidx = 0; cidx < flirmulticamera::GLOBAL_CONST_NCAMS; cidx++) {
+        // Resort
+        for (std::size_t j = 0; j < NKPS; j++) {
+            cv::Point2f _pt; 
+            _pt.x = keypoints.at(cidx).at(j).at(0);
+            _pt.y = keypoints.at(cidx).at(j).at(1);
+            keypoints_cv.at(cidx).push_back(_pt);
+        }
+        cv::undistortPoints(
+            keypoints_cv.at(cidx),
+            keypoints_cv_undistorted.at(cidx),
+            Ks.at(cidx), dists.at(cidx), cv::noArray(), nKs.at(cidx)
+        );
+    }
+
     std::vector<std::future<KeyPoint3D>> kpts_temp;
     for (std::size_t j = 0; j < NKPS; j++)
     {
         std::array<cv::Point2f, flirmulticamera::GLOBAL_CONST_NCAMS> pts;
         for(int cidx = 0; cidx < flirmulticamera::GLOBAL_CONST_NCAMS; cidx++)
         {
-            pts.at(cidx).x = keypoints.at(cidx).at(j).at(0);
-            pts.at(cidx).y = keypoints.at(cidx).at(j).at(1);
+            pts.at(cidx) = keypoints_cv_undistorted.at(cidx).at(j);
+            // pts.at(cidx).x = keypoints.at(cidx).at(j).at(0);
+            // pts.at(cidx).y = keypoints.at(cidx).at(j).at(1);
         }
         // parallel here
         // kpts_temp.at(j) = std::async(
@@ -68,6 +88,17 @@ public:
 Triangulate(const flir_icp_calib::MultiCameras &cameras) : cameras(cameras)
 {
     this->ThreadHandle.reset(new std::thread(&Triangulate::ThreadFunction, this));
+    for(int cidx = 0; cidx < flirmulticamera::GLOBAL_CONST_NCAMS; cidx++)
+    {
+        const Eigen::MatrixXf &_K = cameras.Cam.at(cidx).K;
+        Ks.at(cidx) = (cv::Mat_<double>(3,3) <<
+            _K(0,0), _K(0,1), _K(0,2),
+            _K(1,0), _K(1,1), _K(1,2),
+            _K(2,0), _K(2,1), _K(2,2));
+        const std::vector<float> &_d = cameras.Cam.at(cidx).Distortion;
+        dists.at(cidx) = (cv::Mat_<double>(1,5) << _d.at(0), _d.at(1), _d.at(2), _d.at(3), _d.at(4));
+        nKs.at(cidx) = Ks.at(cidx).clone();
+    }
 };
 ~Triangulate(){};
 void Terminate(void)

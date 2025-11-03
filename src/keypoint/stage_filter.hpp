@@ -32,7 +32,7 @@ bool ProcessFunction(std::array<KeyPoint3D, NKPS> &inputs, std::array<KeyPoint3D
     // output
     for (uint16_t j = 0; j < NKPS; j ++)
     {
-        if (this->buffer.at(j).conf_maf >= 0.4){ // ~ points must be visible for half window 
+        if (this->buffer.at(j).conf_maf >= 0.4){ // ~ points must be visible within half window 
             outputs.at(j).coord = this->buffer.at(j).coord;
         }
         else{
@@ -45,7 +45,7 @@ bool ProcessFunction(std::array<KeyPoint3D, NKPS> &inputs, std::array<KeyPoint3D
     return true;
 };
 public:
-Filter(const double &fps) : dt(static_cast<float>(1./fps))
+Filter(const double &fps, const std::size_t &window_size) : dt(static_cast<float>(1./fps))
 {
     this->frameCounter = 0;
 
@@ -56,6 +56,9 @@ Filter(const double &fps) : dt(static_cast<float>(1./fps))
         this->buffer.at(i).coord = Eigen::Vector3f{0.0, 0.0, 0.0};
         this->buffer.at(i).SeenFor = 0;
         this->buffer.at(i).NotSeenFor = 0;
+    }
+    for (auto &kpt : this->buffer) {
+        kpt.init(window_size);
     }
 
     this->ThreadHandle.reset(new std::thread(&Filter::ThreadFunction, this));

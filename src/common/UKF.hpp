@@ -13,7 +13,7 @@ namespace rt3d_tracking{
 class UKF
 {
 public:
-    UKF(uint8_t n);
+    UKF(std::size_t n);
     ~UKF();
 
     Eigen::VectorXf state;              // [x, y, z, x_dot, y_dot, z_dot].transpose

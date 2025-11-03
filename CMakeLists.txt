@@ -11,7 +11,7 @@ else()
   set(OPTIMIZATION_FLAGS $ENV{CPP_OPTIMIZATIONS})
   set(
     CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -DNDEBUG -O3 -Wno-deprecated-declarations -flto"
+    "-DNDEBUG -O3 -Wno-deprecated-declarations -flto"
   )
 endif()
 

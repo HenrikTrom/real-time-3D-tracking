@@ -23,11 +23,13 @@
       "type": "boolean",
       "description": "Run in online/live mode"
     },
-    "compression_quality": {
+    "maf_window_size": {
       "type": "integer",
-      "minimum": 0,
-      "maximum": 100,
-      "description": "JPEG compression quality for saved frames"
+      "description": "Number of steps in the past for a state to be used in the MA update"
+    },
+    "filter_conf_threshold": {
+      "type": "number",
+      "description": "Confidence threshold for the filter stage"
     }
   },
   "required": [
@@ -36,7 +38,8 @@
     "cfg_det",
     "cfg_pose",
     "online_mode",
-    "compression_quality"
+    "maf_window_size",
+    "filter_conf_threshold"
   ],
   "additionalProperties": false
 }

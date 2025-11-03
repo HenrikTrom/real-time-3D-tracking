@@ -24,6 +24,7 @@ public:
     KPS(
         ros::NodeHandle &nh, const std::string path_pose_cfg, 
         const flir_icp_calib::MultiCameras &cameras, const double &fps,
+        const std::size_t &maf_window_size,
         const std::string topic_name
     ) : cameras(cameras), fps(fps) 
     {
@@ -34,7 +35,7 @@ public:
         this->preprocess_stage.reset(new pose_inference::PreProcessStage(this->cfg));
         this->postprocess_stage.reset(new pose_inference::PostProcessStage<NKPS, FEAT_W, FEAT_H>(this->cfg));
         this->triangulate_stage.reset(new stages::Triangulate<NKPS>(this->cameras));
-        this->filter_stage.reset(new stages::Filter<NKPS>(fps));
+        this->filter_stage.reset(new stages::Filter<NKPS>(fps, maf_window_size));
         this->publish_stage.reset(new stages::PublishKPTS<NKPS>(nh, topic_name, 1));
         // start threads
         while(!this->preprocess_stage->IsReady()){

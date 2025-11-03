@@ -11,8 +11,8 @@ struct config_tracking
     std::string cfg_det = "ERRORcfg_detNotSpecified";
     std::string cfg_pose = "ERRORcfg_bposeNotSpecified";
     bool online_mode = false; // live images y/n?
-    int compression_quality = 50;
-    std::vector<int> compression_params;
+    std::size_t maf_window_size = 0;
+    double filter_conf_threshold = 0;
 };
 
 // TODO: Understand correspondance

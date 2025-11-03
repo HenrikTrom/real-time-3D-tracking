@@ -5,7 +5,7 @@ using namespace std;
 
 namespace rt3d_tracking{
     
-    UKF::UKF(uint8_t n)
+    UKF::UKF(std::size_t n)
     {
         // initialisation of the instance
         this->state = VectorXf{ n };

@@ -45,8 +45,9 @@ public:
     uint64_t SeenFor;
     float conf_maf;
     
-    KeyPoint3D_Augment(void);
+    KeyPoint3D_Augment();
     ~KeyPoint3D_Augment();
+    void init(const std::size_t &window_size);
 
     void Predict(float dt);
     void Update(KeyPoint3D &pointIn);
